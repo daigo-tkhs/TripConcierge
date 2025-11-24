@@ -1,4 +1,7 @@
 Rails.application.routes.draw do
+  get 'trips/index'
+  get 'trips/new'
+  get 'trips/create'
   devise_for :users
 
   # 旅程に関するリソース（作成、一覧、詳細など）を定義
