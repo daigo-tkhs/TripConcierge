@@ -2,11 +2,13 @@
 # exit on error
 set -o errexit
 
-# 1. Gemのインストール
+# Install gems
+echo "Installing Gems..."
 bundle install
 
-# 2. DBマイグレーションをここで実行 (RenderのRelease Commandがない環境向け)
-bundle exec rails db:migrate 
+# 2. DBマイグレーションの行を削除 (Render Release Commandへ移動)
+# bundle exec rails db:migrate 
 
 # 3. アセットの事前コンパイル
+echo "Precompiling Assets..."
 bundle exec rails assets:precompile
