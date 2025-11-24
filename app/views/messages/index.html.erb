@@ -1,2 +1,41 @@
-<h1>Messages#index</h1>
-<p>Find me in app/views/messages/index.html.erb</p>
+<%# app/views/messages/index.html.erb %>
+
+<div class="chat-container">
+  <div class="chat-header">
+    <h1><%= @trip.title %> のAIチャット</h1>
+    <%= link_to '旅程に戻る', trip_path(@trip), class: "back-link" %>
+  </div>
+
+  <div class="messages-list">
+    <% @messages.each do |message| %>
+      <%# ユーザーのメッセージ %>
+      <div class="message user-message">
+        <div class="message-content">
+          <p><%= message.prompt %></p>
+        </div>
+      </div>
+
+      <%# AIの返答 %>
+      <% if message.response.present? %>
+        <div class="message ai-message">
+          <div class="ai-icon">🤖</div>
+          <div class="message-content">
+            <%# simple_formatで改行を反映 %>
+            <%= simple_format(message.response) %>
+          </div>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+
+  <div class="message-form-container">
+    <%= form_with model: [@trip, @message], local: true, class: "message-form" do |f| %>
+      <div class="input-group">
+        <%= f.text_area :prompt, placeholder: "AIに旅の相談をする...", rows: 2, class: "chat-input" %>
+        <%= f.button type: "submit", class: "send-button" do %>
+          送信
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
