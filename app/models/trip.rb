@@ -23,7 +23,20 @@ class Trip < ApplicationRecord
   has_many :trip_users, dependent: :destroy
   has_many :users, through: :trip_users
 
-
+  # スコープの定義
+  
+  # 1. ユーザーが閲覧権限を持つすべての旅程を取得
+  # (TripUserテーブルを介して、ユーザーが閲覧者、編集者、オーナーのいずれかの権限を持つTripを検索)
+  scope :shared_with_user, ->(user) do
+    joins(:trip_users)
+      .where('trip_users.user_id = ?', user.id)
+      .distinct
+  end
+  # 2. ユーザーがオーナーである旅程を取得
+  scope :owned_by_user, ->(user) { where(owner: user) }
+  
+  
+  
   # コールバック：旅程作成後に実行
   after_create :set_owner_as_trip_user
 
