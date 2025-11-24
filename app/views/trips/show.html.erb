@@ -1,0 +1,44 @@
+<%# app/views/trips/show.html.erb %>
+
+<%# ワイヤーフレームに基づき、ヘッダーとサマリー情報を表示 %>
+<div class="trip-detail-container">
+  <div class="header-bar">
+    <h1><%= @trip.title %></h1>
+    <p><%= @trip.start_date %> - <%= @trip.end_date %></p>
+    
+    <%# 右側のアイコン（共有、チェックリスト、編集） %>
+    <div class="action-icons">
+      <%= link_to '共有', sharing_trip_path(@trip), class: "icon-share" %>
+      <%= link_to 'リスト', trip_checklists_path(@trip), class: "icon-checklist" %>
+      <%= link_to '編集', edit_trip_path(@trip), class: "icon-edit" %>
+    </div>
+  </div>
+
+  <div class="summary-card">
+    <%# 予算と移動時間のサマリー %>
+    <p>総予算: ¥<%= number_with_delimiter(@trip.total_budget) %></p>
+    <%# 合計移動時間は、スポット実装後に計算ロジックを実装 %>
+    <p>合計移動時間: (計算ロジック未実装)</p>
+  </div>
+
+  <div class="schedule-section">
+    <h2>スケジュール</h2>
+    <% if @trip.spots.present? %>
+      <%# スポット表示ロジックは、Spotモデルの実装後に記述 %>
+      <% @trip.spots.each do |spot| %>
+        <div class="spot-card">
+          <h3><%= spot.name %></h3>
+          <p>費用: ¥<%= number_with_delimiter(spot.estimated_cost) %></p>
+          <p>移動時間: <%= spot.duration %>分</p>
+          <%# 地図連携や予約リンク %>
+        </div>
+      <% end %>
+    <% else %>
+      <p>まだスポットが登録されていません。</p>
+      <%= link_to 'スポットを登録', new_trip_spot_path(@trip) %>
+    <% end %>
+  </div>
+</div>
+
+<%# 下部のAIチャットボタン %>
+<%= link_to "AIとチャット", trip_messages_path(@trip), class: "fab-chat-button" %>
