@@ -2,6 +2,7 @@
 
 class TripsController < ApplicationController
   before_action :authenticate_user!
+  before_action :set_trip, only: [:show, :edit, :update, :destroy]
   
   def index
     @trips = Trip.shared_with_user(current_user)
@@ -23,11 +24,20 @@ class TripsController < ApplicationController
       render :new, status: :unprocessable_entity
     end
   end
+
+  def show
+  end
   
   private
   
   # Strong Parameters: DBスキーマで定義した必須項目のみを許可
   def trip_params
     params.require(:trip).permit(:title, :start_date, :total_budget, :travel_theme)
+  end
+
+  def set_trip
+    @trip = Trip.shared_with_user(current_user).find(params[:id])
+  rescue ActiveRecord::RecordNotFound
+    redirect_to root_path, alert: "指定された旅程が見つからないか、アクセス権がありません。"
   end
 end
