@@ -22,4 +22,15 @@ class Trip < ApplicationRecord
   # 共有ユーザーとの多対多の関連付け
   has_many :trip_users, dependent: :destroy
   has_many :users, through: :trip_users
+
+
+  # コールバック：旅程作成後に実行
+  after_create :set_owner_as_trip_user
+
+  private
+  # 旅程作成者をTripUserとして登録し、オーナー権限を付与する
+  def set_owner_as_trip_user
+    # TripUserを通して、owner (User) をこのTripにowner権限で追加
+    trip_users.create!(user: owner, permission_level: :owner)
+  end
 end
