@@ -1,6 +1,6 @@
 default: &default
   adapter: mysql2
-  encoding: utf8mb4
+  encoding: utf8
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   username: root
   password:
@@ -15,10 +15,14 @@ test:
 
 production:
   <<: *default
-  # Render等のプラットフォームで提供されるDATABASE_URL環境変数を使用
-  url: <%= ENV['DATABASE_URL'] %> 
+  # アダプタをPostgreSQLに変更
+  adapter: postgresql
   
-  # 環境変数が利用できない場合のフォールバック（ユーザー名、ホスト、ポートなどをENVで管理）
+  # Renderが提供するDATABASE_URL環境変数を最優先で使用
+  # (urlキーが指定されると、他のdatabase, username, hostキーは通常無視されます)
+  url: <%= ENV['DATABASE_URL'] %> 
+
+  # フォールバック/確認用の設定（通常はDATABASE_URLが上書きします）
   database: travel_shiori_production
   username: <%= ENV["DB_USERNAME"] %>
   password: <%= ENV["DB_PASSWORD"] %>

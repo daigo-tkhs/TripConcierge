@@ -1,3 +1,4 @@
+
 source "https://rubygems.org"
 
 ruby "3.2.0"
@@ -35,4 +36,9 @@ end
 group :test do
   gem "capybara"
   gem "selenium-webdriver"
+end
+
+
+group :production do
+  gem 'pg', '~> 1.0' 
 end
