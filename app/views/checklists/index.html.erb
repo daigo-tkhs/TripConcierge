@@ -1,2 +1,42 @@
-<h1>Checklists#index</h1>
-<p>Find me in app/views/checklists/index.html.erb</p>
+<%# app/views/checklists/index.html.erb %>
+
+<div class="container">
+  <div class="checklist-header">
+    <h1><%= @trip.title %> の持ち物リスト</h1>
+    <%= link_to '旅程に戻る', trip_path(@trip), class: "back-link" %>
+  </div>
+
+  <%# 新規アイテム登録フォーム %>
+  <div class="checklist-form-card">
+    <%= form_with model: [@trip, @checklist_item], local: true, class: "new-item-form" do |f| %>
+      <%= render 'shared/error_messages', resource: @checklist_item %>
+      
+      <div class="input-group">
+        <%= f.text_field :name, placeholder: "新しい持ち物を追加...", class: "item-input" %>
+        <%= f.submit "追加", class: "add-button" %>
+      </div>
+    <% end %>
+  </div>
+
+  <%# リスト一覧表示 %>
+  <div class="checklist-items">
+    <% if @checklist_items.any? %>
+      <% @checklist_items.each do |item| %>
+        <div class="checklist-item <%= 'completed' if item.is_checked %>">
+          <%# 更新フォーム（チェックボックスの切り替え） %>
+          <%= form_with model: [@trip, item], local: true, class: "item-update-form" do |f| %>
+            <label class="checkbox-label">
+              <%# チェックボックスをクリックして更新ボタンを押す運用、またはJSで自動送信 %>
+              <%= f.check_box :is_checked, onchange: 'this.form.submit()', class: "item-checkbox" %>
+              <span class="item-name"><%= item.name %></span>
+            </label>
+          <% end %>
+          
+          <%# 削除ボタン（必要であれば実装、今回はコントローラーにdestroyがないため省略可ですが、あると便利です） %>
+        </div>
+      <% end %>
+    <% else %>
+      <p class="empty-state">まだ持ち物が登録されていません。</p>
+    <% end %>
+  </div>
+</div>
