@@ -23,7 +23,7 @@ class MessagesController < ApplicationController
             version: 'v1beta', # <--- ★ここが重要（APIバージョン指定）
             api_key: Rails.application.credentials.gemini[:api_key]
           },
-          options: { model: 'gemini-1.5-flash', server_sent_events: false }
+          options: { model: 'gemini-2.0-flash', server_sent_events: false }
         )
 
         # ユーザーの入力をAIに送信
