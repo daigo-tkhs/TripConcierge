@@ -1,44 +1,145 @@
 <%# app/views/trips/show.html.erb %>
 
-<%# ワイヤーフレームに基づき、ヘッダーとサマリー情報を表示 %>
-<div class="trip-detail-container">
-  <div class="header-bar">
-    <h1><%= @trip.title %></h1>
-    <p>開始日: <%= @trip.start_date %></p>
-    
-    <%# 右側のアイコン（共有、チェックリスト、編集） %>
-    <div class="action-icons">
-      <%= link_to '共有', sharing_trip_path(@trip), class: "icon-share" %>
-      <%= link_to 'リスト', trip_checklists_path(@trip), class: "icon-checklist" %>
-      <%= link_to '編集', edit_trip_path(@trip), class: "icon-edit" %>
+<div class="pb-24"> <%# 下部ナビゲーションとFABのために余白確保 %>
+  
+  <%# 1. ヘッダー (TripHeader) %>
+  <%# bg-gradient-to-r from-purple-600 to-blue-600 %>
+  <div class="bg-gradient-to-r from-purple-600 to-blue-600 border-b border-blue-700 sticky top-0 z-10 text-white shadow-md">
+    <div class="px-4 py-4">
+      <div class="flex items-start justify-between gap-3">
+        <%# 戻るボタン %>
+        <%= link_to :back, class: "p-2 hover:bg-white/20 rounded-full transition-colors flex-shrink-0" do %>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-white">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+          </svg>
+        <% end %>
+
+        <div class="flex-1">
+          <h1 class="text-lg font-bold text-white mb-1 leading-tight"><%= @trip.title %></h1>
+          <p class="text-blue-100 text-sm">3泊4日</p> <%# ※期間計算ロジック未実装のため仮置き %>
+          <p class="text-blue-50 text-xs mt-1"><%= @trip.start_date %> - <%= @trip.end_date %></p> <%# end_dateがない場合は調整 %>
+        </div>
+
+        <div class="flex items-center gap-1 flex-shrink-0">
+          <%# 共有ボタン %>
+          <%= link_to sharing_trip_path(@trip), class: "p-2 hover:bg-white/20 rounded-full transition-colors" do %>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-white">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
+            </svg>
+          <% end %>
+          <%# チェックリストボタン %>
+          <%= link_to trip_checklists_path(@trip), class: "p-2 hover:bg-white/20 rounded-full transition-colors" do %>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-white">
+               <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" />
+            </svg>
+          <% end %>
+          <%# 編集ボタン %>
+          <%= link_to edit_trip_path(@trip), class: "p-2 hover:bg-white/20 rounded-full transition-colors" do %>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-white">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+            </svg>
+          <% end %>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="summary-card">
-    <%# 予算と移動時間のサマリー %>
-    <p>総予算: ¥<%= number_with_delimiter(@trip.total_budget) %></p>
-    <%# 合計移動時間は、スポット実装後に計算ロジックを実装 %>
-    <p>合計移動時間: (計算ロジック未実装)</p>
-  </div>
+  <div class="p-4 space-y-4">
+    <%# 2. サマリーカード (SummaryCard) %>
+    <div class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+      <h2 class="text-gray-900 mb-3 text-sm font-bold">旅程サマリー</h2>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="flex items-start gap-3">
+          <div class="p-2 bg-blue-50 rounded-lg">
+             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-blue-600">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 3.75h-.75a.75.75 0 0 1 .75-.75Zm0 0h2.25m-2.25 0c.533 0 1.054.05 1.564.145 1.134.21 2.26.489 3.347.836 2.655.847 5.37 1.567 8.149 2.156.675.144 1.193.763 1.193 1.453v10.625m-9 2.25H3.75m0-2.25h.75a.75.75 0 0 1 .75.75Zm0 0v-2.25m0 2.25c0 .414.336.75.75.75Zm0-2.25a.75.75 0 0 1 .75-.75h.75a.75.75 0 0 1 .75.75v2.25m0-2.25h2.25m-2.25 0c.533 0 1.054.05 1.564.145 1.134.21 2.26.489 3.347.836" />
+            </svg>
+          </div>
+          <div>
+            <p class="text-xs text-gray-600 mb-1">総予算</p>
+            <p class="text-gray-900 font-bold">¥<%= number_with_delimiter(@trip.total_budget) %></p>
+          </div>
+        </div>
+        
+        <div class="flex items-start gap-3">
+          <div class="p-2 bg-green-50 rounded-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-green-600">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+            </svg>
+          </div>
+          <div>
+            <p class="text-xs text-gray-600 mb-1">合計移動時間</p>
+            <p class="text-gray-900 font-bold">計算中...</p> <%# 仮 %>
+          </div>
+        </div>
+      </div>
+    </div>
 
-  <div class="schedule-section">
-    <h2>スケジュール</h2>
-    <% if @trip.spots.present? %>
-      <%# スポット表示ロジックは、Spotモデルの実装後に記述 %>
-      <% @trip.spots.each do |spot| %>
-        <div class="spot-card">
-          <h3><%= spot.name %></h3>
-          <p>費用: ¥<%= number_with_delimiter(spot.estimated_cost) %></p>
-          <p>移動時間: <%= spot.duration %>分</p>
-          <%# 地図連携や予約リンク %>
+    <%# 3. スケジュール (SpotCard) %>
+    <div class="schedule-section">
+      <div class="bg-blue-600 text-white px-4 py-2 rounded-t-lg flex justify-between items-center mb-2 shadow-sm">
+        <h2 class="text-sm font-bold">DAY 1</h2>
+        <span class="text-xs opacity-90"><%= @trip.start_date %></span>
+      </div>
+
+      <% if @trip.spots.present? %>
+        <% @trip.spots.each do |spot| %>
+          <div class="bg-gray-50 rounded-lg p-3 mb-3 border border-gray-100 shadow-sm">
+            <div class="flex gap-3">
+              <div class="flex-shrink-0">
+                <div class="w-20 h-20 bg-gray-200 rounded-lg overflow-hidden">
+                  <%# 画像があれば表示、なければダミー %>
+                  <div class="w-full h-full bg-gray-300 flex items-center justify-center text-gray-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="flex-1 min-w-0">
+                <h3 class="text-gray-900 mb-2 font-bold text-sm truncate"><%= spot.name %></h3>
+                
+                <div class="flex items-center gap-4 text-xs">
+                  <div class="flex items-center gap-1.5 text-gray-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                    </svg>
+                    <span><%= spot.duration %>分</span>
+                  </div>
+                  
+                  <div class="flex items-center gap-1.5 text-gray-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                    </svg>
+                    <span>¥<%= number_with_delimiter(spot.estimated_cost) %></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      <% else %>
+        <div class="text-center py-8 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+          <p class="text-gray-500 text-sm mb-2">まだスポットがありません</p>
+          <%= link_to 'スポットを登録する', new_trip_spot_path(@trip), class: "text-blue-600 underline text-sm" %>
         </div>
       <% end %>
-    <% else %>
-      <p>まだスポットが登録されていません。</p>
-      <%= link_to 'スポットを登録', new_trip_spot_path(@trip) %>
-    <% end %>
+    </div>
   </div>
-</div>
 
-<%# 下部のAIチャットボタン %>
-<%= link_to "AIとチャット", trip_messages_path(@trip), class: "fab-chat-button" %>
+  <%# 4. AIチャットボタン (FabButton) %>
+  <%# fixed right-4 bottom-24: 下部ナビゲーション(bottom-0)より少し上に配置 %>
+  <%= link_to trip_messages_path(@trip), class: "fixed right-4 bottom-24 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center gap-2 px-5 py-4 z-20" do %>
+    <div class="relative">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.159 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z" />
+      </svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3 h-3 absolute -top-1 -right-1 text-yellow-300">
+        <path fill-rule="evenodd" d="M9 4.5a.75.75 0 0 1 .721.544l.813 2.846a3.75 3.75 0 0 0 2.576 2.576l2.846.813a.75.75 0 0 1 0 1.442l-2.846.813a3.75 3.75 0 0 0-2.576 2.576l-.813 2.846a.75.75 0 0 1-1.442 0l-.813-2.846a3.75 3.75 0 0 0-2.576-2.576l-2.846-.813a.75.75 0 0 1 0-1.442l2.846-.813a3.75 3.75 0 0 0 2.576-2.576l.813-2.846A.75.75 0 0 1 9 4.5ZM9 6a.75.75 0 0 1 .75.75V15a.75.75 0 0 1-1.5 0V6.75A.75.75 0 0 1 9 6Z" clip-rule="evenodd" />
+      </svg>
+    </div>
+    <span class="font-bold">AIとチャット</span>
+  <% end %>
+
+</div>
