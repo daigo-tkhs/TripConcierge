@@ -5,18 +5,41 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
+    <%= stylesheet_link_tag "tailwind", "inter-font", "data-turbo-track": "reload" %>
 
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
 
-  <body>
-    <%= render 'shared/header' %> 
+  <%# 全体の背景をグレーにし、アプリの雰囲気を出す %>
+  <body class="bg-gray-100 text-gray-800 font-sans antialiased">
     
-    <p class="notice"><%= notice %></p>
-    <p class="alert"><%= alert %></p>
-    <%= yield %>
+    <%# スマホサイズ（最大幅md）に制限し、中央寄せ + 影をつける %>
+    <%# min-h-screen: 画面いっぱいの高さ %>
+    <%# relative: 内部の固定配置（Header/Footer）の基準 %>
+    <%# pb-20: 下部固定フッターの裏にコンテンツが隠れないように余白確保 %>
+    <div class="max-w-md mx-auto min-h-screen bg-white shadow-2xl relative pb-24">
+      
+      <%= render 'shared/header' %>
+      
+      <%# フラッシュメッセージの表示エリア %>
+      <% if notice %>
+        <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 m-4" role="alert">
+          <p><%= notice %></p>
+        </div>
+      <% end %>
+      <% if alert %>
+        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 m-4" role="alert">
+          <p><%= alert %></p>
+        </div>
+      <% end %>
 
-    <%= render 'shared/footer' %> 
+      <%# メインコンテンツ %>
+      <main class="p-4">
+        <%= yield %>
+      </main>
+
+      <%= render 'shared/footer' %>
+    </div>
   </body>
 </html>
