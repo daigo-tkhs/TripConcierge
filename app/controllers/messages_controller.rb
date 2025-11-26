@@ -22,7 +22,7 @@ class MessagesController < ApplicationController
             service: 'generative-language-api',
             api_key: Rails.application.credentials.gemini[:api_key]
           },
-          options: { model: 'gemini-pro', server_sent_events: false }
+          options: { model: 'gemini-1.5-flash', server_sent_events: false }
         )
 
         # ユーザーの入力をAIに送信
