@@ -1,29 +1,19 @@
 Rails.application.routes.draw do
-  get 'checklists/index'
-  get 'checklists/create'
-  get 'checklists/update'
-  get 'spots/create'
-  get 'spots/update'
-  get 'spots/destroy'
-  get 'messages/create'
-  get 'messages/index'
-  get 'messages/update'
-  get 'messages/destroy'
-  get 'trips/index'
-  get 'trips/new'
-  get 'trips/create'
   devise_for :users
 
   # 旅程に関するリソース（作成、一覧、詳細など）を定義
   resources :trips do
-    # 旅程にネストする機能（会話履歴、スポット管理）を定義
-    resources :messages, only: [:create, :update, :destroy] # コメント投稿・編集・削除機能
-    resources :spots, only: [:create, :update, :destroy] # スポットの追加・編集機能
-    resources :checklists, only: [:index, :create, :update] # チェックリスト表示・管理機能
+    # 旅程にネストする機能
+    resources :messages, only: [:index, :create, :update, :destroy] # indexも必要になる可能性があります
+    
+    # ★ここが重要修正ポイント★ :new を追加しました
+    resources :spots, only: [:new, :create, :update, :destroy] 
+    
+    resources :checklists, only: [:index, :create, :update] 
     
     # 共有設定画面
     member do
-      get 'sharing' # 旅程共有設定画面へのルート (Req H)
+      get 'sharing'
     end
   end
 
