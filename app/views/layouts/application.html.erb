@@ -16,8 +16,7 @@
   <%# 全体の背景を薄いグレーにし、アプリの雰囲気を出す %>
   <body class="bg-gray-100 text-gray-800 font-sans antialiased">
     
-    <%# スマホサイズ（最大幅md: 約450px）に制限し、中央寄せ + 影をつける %>
-    <div class="max-w-md mx-auto min-h-screen bg-white shadow-2xl relative pb-24">
+    <div class="max-w-md md:max-w-2xl lg:max-w-4xl mx-auto min-h-screen bg-white shadow-2xl relative pb-24">
       
       <%# 共通ヘッダー（詳細画面など @hide_header が true の時は表示しない） %>
       <%= render 'shared/header' unless @hide_header %>
