@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_11_23_114726) do
+ActiveRecord::Schema[7.1].define(version: 2025_11_28_090335) do
   create_table "checklist_items", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.bigint "trip_id", null: false
     t.string "name"
@@ -62,6 +62,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_23_114726) do
     t.text "context"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.date "end_date"
   end
 
   create_table "users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|

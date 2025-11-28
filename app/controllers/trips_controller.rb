@@ -40,7 +40,7 @@ class TripsController < ApplicationController
 
   def update
     if @trip.update(trip_params)
-      redirect_to @trip, notice: '旅程を更新しました。'
+      redirect_to @trip
     else
       flash.now[:alert] = '更新に失敗しました。入力内容を確認してください。'
       render :edit, status: :unprocessable_entity
@@ -55,7 +55,7 @@ class TripsController < ApplicationController
   private
 
   def trip_params
-    params.require(:trip).permit(:title, :start_date, :total_budget, :travel_theme)
+    params.require(:trip).permit(:title, :start_date, :end_date, :total_budget, :travel_theme)
   end
 
   def set_trip
