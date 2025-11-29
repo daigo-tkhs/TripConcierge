@@ -11,7 +11,7 @@
 # It's strongly recommended that you check this file into your version control system.
 
 ActiveRecord::Schema[7.1].define(version: 2025_11_28_090335) do
-  create_table "checklist_items", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "checklist_items", charset: "utf8mb3", collation: "utf8mb3_general_ci", force: :cascade do |t|
     t.bigint "trip_id", null: false
     t.string "name"
     t.boolean "is_checked"
@@ -20,7 +20,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_28_090335) do
     t.index ["trip_id"], name: "index_checklist_items_on_trip_id"
   end
 
-  create_table "messages", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "messages", charset: "utf8mb3", collation: "utf8mb3_general_ci", force: :cascade do |t|
     t.bigint "trip_id", null: false
     t.bigint "user_id", null: false
     t.text "prompt"
@@ -31,7 +31,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_28_090335) do
     t.index ["user_id"], name: "index_messages_on_user_id"
   end
 
-  create_table "spots", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "spots", charset: "utf8mb3", collation: "utf8mb3_general_ci", force: :cascade do |t|
     t.bigint "trip_id", null: false
     t.integer "day_number"
     t.string "name"
@@ -43,7 +43,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_28_090335) do
     t.index ["trip_id"], name: "index_spots_on_trip_id"
   end
 
-  create_table "trip_users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "trip_users", charset: "utf8mb3", collation: "utf8mb3_general_ci", force: :cascade do |t|
     t.bigint "trip_id", null: false
     t.bigint "user_id", null: false
     t.integer "permission_level"
@@ -53,7 +53,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_28_090335) do
     t.index ["user_id"], name: "index_trip_users_on_user_id"
   end
 
-  create_table "trips", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "trips", charset: "utf8mb3", collation: "utf8mb3_general_ci", force: :cascade do |t|
     t.integer "owner_id"
     t.string "title"
     t.date "start_date"
@@ -65,7 +65,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_28_090335) do
     t.date "end_date"
   end
 
-  create_table "users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "users", charset: "utf8mb3", collation: "utf8mb3_general_ci", force: :cascade do |t|
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
     t.string "reset_password_token"
