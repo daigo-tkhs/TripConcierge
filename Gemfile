@@ -38,8 +38,10 @@ group :test do
   gem "selenium-webdriver"
 end
 
-
 group :production do
   gem 'pg', '~> 1.0' 
 end
+
 gem "tailwindcss-rails", "~> 4.4"
+
+gem 'devise-i18n'
