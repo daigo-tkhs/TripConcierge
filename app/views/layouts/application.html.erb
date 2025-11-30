@@ -6,39 +6,39 @@
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
     
-    <%# Tailwind CSSの読み込み %>
     <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
-    
     <%= javascript_importmap_tags %>
   </head>
 
-  <%# 全体の背景を薄いグレーにし、アプリの雰囲気を出す %>
-  <body class="bg-gray-100 text-gray-800 font-sans antialiased">
+  <body class="bg-gray-50 text-gray-800 font-sans antialiased min-h-screen flex flex-col">
     
-    <div class="max-w-md md:max-w-2xl lg:max-w-4xl mx-auto min-h-screen bg-white shadow-2xl relative pb-24">
+    <%# --- アプリ全体のコンテナ（幅制限・中央寄せ・影付き） --- %>
+    <div class="flex-1 w-full max-w-md md:max-w-4xl mx-auto bg-white shadow-xl min-h-screen relative pb-24">
       
-      <%# 共通ヘッダー（詳細画面など @hide_header が true の時は表示しない） %>
+      <%# --- ヘッダー（コンテナの中に配置することで幅を合わせる） --- %>
       <%= render 'shared/header' unless @hide_header %>
-      
-      <%# フラッシュメッセージ（通知）の表示エリア %>
+
+      <%# フラッシュメッセージ %>
       <% if notice %>
-        <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 m-4 rounded shadow-sm" role="alert">
+        <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 m-4 rounded shadow-sm text-sm" role="alert">
           <p><%= notice %></p>
         </div>
       <% end %>
       <% if alert %>
-        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 m-4 rounded shadow-sm" role="alert">
+        <div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 m-4 rounded shadow-sm text-sm" role="alert">
           <p><%= alert %></p>
         </div>
       <% end %>
 
       <%# メインコンテンツ %>
-      <main class="p-4">
+      <main>
         <%= yield %>
       </main>
 
+      <%# --- フッター --- %>
       <%= render 'shared/footer' %>
     </div>
+
   </body>
 </html>

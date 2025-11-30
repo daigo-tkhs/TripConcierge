@@ -1,0 +1,37 @@
+<%# app/views/spots/_form.html.erb %>
+
+<%= form_with model: [trip, spot], local: true, class: "space-y-5" do |f| %>
+  <%= render 'shared/error_messages', resource: spot %>
+
+  <div>
+    <%= f.label :day_number, "何日目？", class: "block text-sm font-bold text-gray-700 mb-1" %>
+    <%= f.number_field :day_number, min: 1, class: "w-20 rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-center" %>
+  </div>
+
+  <div>
+    <%= f.label :name, "スポット名 (必須)", class: "block text-sm font-bold text-gray-700 mb-1" %>
+    <%= f.text_field :name, placeholder: "例: 軽井沢駅", class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+  </div>
+
+  <div class="grid grid-cols-2 gap-4">
+    <div>
+      <%= f.label :estimated_cost, "概算費用 (円)", class: "block text-sm font-bold text-gray-700 mb-1" %>
+      <%= f.number_field :estimated_cost, min: 0, placeholder: "0", class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+    </div>
+    <div>
+      <%= f.label :duration, "滞在時間 (分)", class: "block text-sm font-bold text-gray-700 mb-1" %>
+      <%= f.number_field :duration, min: 0, placeholder: "60", class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+    </div>
+  </div>
+  
+  <div>
+    <%= f.label :booking_url, "予約/参考URL", class: "block text-sm font-bold text-gray-700 mb-1" %>
+    <%= f.url_field :booking_url, placeholder: "https://...", class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm" %>
+  </div>
+
+  <div class="pt-4">
+    <%= f.submit btn_text, class: "w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition shadow-sm cursor-pointer" %>
+    
+    <%= link_to "キャンセル", trip_path(trip), class: "block w-full text-center text-gray-500 py-3 mt-2 hover:text-gray-700 transition text-sm" %>
+  </div>
+<% end %>

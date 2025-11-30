@@ -1,39 +1,9 @@
 <%# app/views/spots/new.html.erb %>
 
-<div class="container">
-  <h1>スポットを追加</h1>
-  <%= link_to '旅程に戻る', trip_path(@trip), class: "back-link" %>
-
-  <%= form_with model: [@trip, @spot], local: true do |f| %>
-    <%= render 'shared/error_messages', resource: @spot %>
-
-    <div class="field">
-      <%= f.label :day_number, "何日目？" %>
-      <%= f.number_field :day_number, min: 1, value: 1 %>
-    </div>
-
-    <div class="field">
-      <%= f.label :name, "スポット名 (必須)" %>
-      <%= f.text_field :name, placeholder: "例: 軽井沢駅" %>
-    </div>
-
-    <div class="field">
-      <%= f.label :estimated_cost, "概算費用 (円)" %>
-      <%= f.number_field :estimated_cost, min: 0 %>
-    </div>
-
-    <div class="field">
-      <%= f.label :duration, "滞在/移動時間 (分)" %>
-      <%= f.number_field :duration, min: 0, placeholder: "例: 60" %>
-    </div>
-    
-    <div class="field">
-      <%= f.label :booking_url, "予約/参考URL" %>
-      <%= f.url_field :booking_url, placeholder: "https://..." %>
-    </div>
-
-    <div class="actions">
-      <%= f.submit "保存する" %>
-    </div>
-  <% end %>
+<div class="pb-24 px-4 pt-6">
+  <h1 class="text-xl font-bold text-gray-900 mb-6">スポットを追加</h1>
+  
+  <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+    <%= render 'form', trip: @trip, spot: @spot, btn_text: "保存する" %>
+  </div>
 </div>
