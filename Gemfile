@@ -45,3 +45,5 @@ end
 gem "tailwindcss-rails", "~> 4.4"
 
 gem 'devise-i18n'
+
+gem "google_maps_service"
