@@ -1,41 +1,98 @@
 <%# app/views/messages/index.html.erb %>
 
-<div class="chat-container">
-  <div class="chat-header">
-    <h1><%= @trip.title %> のAIチャット</h1>
-    <%= link_to '旅程に戻る', trip_path(@trip), class: "back-link" %>
+<div class="bg-gray-100 min-h-screen flex flex-col">
+  
+  <%# --- 1. ヘッダー --- %>
+  <div class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50 px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <%= link_to trip_path(@trip), class: "p-2 -ml-2 hover:bg-gray-100 rounded-full transition-colors text-gray-600" do %>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+        </svg>
+      <% end %>
+      <div>
+        <h1 class="font-bold text-gray-800 text-sm"><%= @trip.title %></h1>
+        <p class="text-xs text-purple-600 flex items-center gap-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3">
+            <path d="M15.98 1.804a1 1 0 0 0-1.96 0l-.24 1.192a1 1 0 0 1-.784.785l-1.192.238a1 1 0 0 0 0 1.962l1.192.238a1 1 0 0 1 .785.785l.238 1.192a1 1 0 0 0 1.962 0l.238-1.192a1 1 0 0 1 .785-.785l1.192-.238a1 1 0 0 0 0-1.962l-1.192-.238a1 1 0 0 1-.785-.785l-.238-1.192ZM6.949 5.684a1 1 0 0 0-1.898 0l-.683 2.051a1 1 0 0 1-.95.69h-2.16a1 1 0 0 0-.95 1.31l1.75 2.545a1 1 0 0 1 .35 1.077l-.683 2.051a1 1 0 0 0 1.536 1.116l1.75-1.27a1 1 0 0 1 1.175 0l1.75 1.27a1 1 0 0 0 1.536-1.116l-.683-2.05c-.114-.34.002-.715.35-1.078l1.75-2.545a1 1 0 0 0-.95-1.31h-2.16a1 1 0 0 1-.95-.69l-.683-2.05Z" />
+          </svg>
+          AIトラベルアシスタント
+        </p>
+      </div>
+    </div>
   </div>
 
-  <div class="messages-list">
+  <%# --- 2. チャットエリア --- %>
+  <%# pb-24: 入力フォームの高さ分だけ余白を確保 %>
+  <div class="flex-1 p-4 space-y-6 pb-32 overflow-y-auto" id="messages-container">
+    
+    <%# 初回メッセージ（固定） %>
+    <div class="flex justify-start items-start gap-2">
+      <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0 text-white shadow-sm">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+          <path d="M9 4.5a.75.75 0 0 1 .721.544l.813 2.846a3.75 3.75 0 0 0 2.576 2.576l2.846.813a.75.75 0 0 1 0 1.442l-2.846.813a3.75 3.75 0 0 0-2.576 2.576l-.813 2.846a.75.75 0 0 1-1.442 0l-.813-2.846a3.75 3.75 0 0 0-2.576-2.576l-2.846-.813a.75.75 0 0 1 0-1.442l2.846-.813a3.75 3.75 0 0 0 2.576-2.576l.813-2.846A.75.75 0 0 1 9 4.5ZM9 6a.75.75 0 0 1 .75.75V15a.75.75 0 0 1-1.5 0V6.75A.75.75 0 0 1 9 6Z" />
+        </svg>
+      </div>
+      <div class="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm border border-gray-100 text-sm text-gray-800 max-w-[85%] leading-relaxed">
+        こんにちは！旅行の計画でお困りですか？<br>
+        「おすすめの観光地は？」「2日目のランチどこがいい？」など、なんでも聞いてください！
+      </div>
+    </div>
+
+    <%# 履歴ループ %>
     <% @messages.each do |message| %>
-      <%# ユーザーのメッセージ %>
-      <div class="message user-message">
-        <div class="message-content">
-          <p><%= message.prompt %></p>
+      
+      <%# ユーザーのメッセージ（右側） %>
+      <div class="flex justify-end">
+        <div class="bg-blue-600 text-white p-3 rounded-2xl rounded-tr-none shadow-md text-sm max-w-[80%] leading-relaxed">
+          <%= simple_format(message.prompt, class: "mb-0") %>
         </div>
       </div>
 
-      <%# AIの返答 %>
+      <%# AIの返答（左側） %>
       <% if message.response.present? %>
-        <div class="message ai-message">
-          <div class="ai-icon">🤖</div>
-          <div class="message-content">
-            <%# simple_formatで改行を反映 %>
+        <div class="flex justify-start items-start gap-2">
+          <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0 text-white shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+              <path d="M9 4.5a.75.75 0 0 1 .721.544l.813 2.846a3.75 3.75 0 0 0 2.576 2.576l2.846.813a.75.75 0 0 1 0 1.442l-2.846.813a3.75 3.75 0 0 0-2.576 2.576l-.813 2.846a.75.75 0 0 1-1.442 0l-.813-2.846a3.75 3.75 0 0 0-2.576-2.576l-2.846-.813a.75.75 0 0 1 0-1.442l2.846-.813a3.75 3.75 0 0 0 2.576-2.576l.813-2.846A.75.75 0 0 1 9 4.5ZM9 6a.75.75 0 0 1 .75.75V15a.75.75 0 0 1-1.5 0V6.75A.75.75 0 0 1 9 6Z" />
+            </svg>
+          </div>
+          <div class="bg-white p-4 rounded-2xl rounded-tl-none shadow-sm border border-gray-100 text-sm text-gray-800 max-w-[90%] leading-relaxed prose prose-sm prose-blue">
+            <%# AIの返答（Markdown対応が必要だが、一旦simple_formatで） %>
             <%= simple_format(message.response) %>
           </div>
         </div>
       <% end %>
+
     <% end %>
+    
+    <%# 自動スクロール用のアンカー %>
+    <div id="scroll-anchor"></div>
   </div>
 
-  <div class="message-form-container">
-    <%= form_with model: [@trip, @message], local: true, class: "message-form" do |f| %>
-      <div class="input-group">
-        <%= f.text_area :prompt, placeholder: "AIに旅の相談をする...", rows: 2, class: "chat-input" %>
-        <%= f.button type: "submit", class: "send-button" do %>
-          送信
-        <% end %>
-      </div>
-    <% end %>
+  <%# --- 3. 入力フォーム（下部固定） --- %>
+  <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-50 safe-area-pb">
+    <div class="max-w-md md:max-w-4xl mx-auto">
+      <%= form_with model: [@trip, @message], local: true, class: "relative" do |f| %>
+        <div class="flex items-end gap-2 bg-gray-100 p-2 rounded-3xl border border-transparent focus-within:border-blue-500 focus-within:bg-white transition-colors">
+          <%= f.text_area :prompt, placeholder: "メッセージを入力...", rows: 1, class: "w-full bg-transparent border-none focus:ring-0 resize-none max-h-32 py-2.5 px-3 text-sm", oninput: 'this.style.height = "";this.style.height = this.scrollHeight + "px"' %>
+          
+          <%= f.button type: "submit", class: "bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition shadow-sm mb-0.5 mr-0.5 flex-shrink-0" do %>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+              <path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" />
+            </svg>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
   </div>
+
 </div>
+
+<%# 画面を開いたときに一番下までスクロールする簡易スクリプト %>
+<script>
+  window.onload = function() {
+    const element = document.getElementById('scroll-anchor');
+    element.scrollIntoView({ behavior: "auto" });
+  };
+</script>
