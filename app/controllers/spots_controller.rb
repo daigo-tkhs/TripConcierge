@@ -1,7 +1,7 @@
 class SpotsController < ApplicationController
   before_action :authenticate_user!
   before_action :set_trip
-  before_action :set_spot, only: [:edit, :update, :destroy]
+  before_action :set_spot, only: [:edit, :update, :destroy, :move]
 
   def new
     @spot = @trip.spots.build
@@ -32,6 +32,12 @@ class SpotsController < ApplicationController
   def destroy
     @spot.destroy
     redirect_to trip_path(@trip), notice: 'スポットを削除しました。', status: :see_other
+  end
+
+  def move
+    # acts_as_list のメソッドを使って位置を変更
+    @spot.insert_at(params[:position].to_i)
+    head :ok # 画面遷移せず、成功ステータスだけ返す
   end
 
   private
