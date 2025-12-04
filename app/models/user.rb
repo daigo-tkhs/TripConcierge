@@ -7,5 +7,6 @@ class User < ApplicationRecord
   has_many :owned_trips, class_name: 'Trip', foreign_key: 'owner_id', dependent: :destroy
   has_many :trip_users, dependent: :destroy
   has_many :trips, through: :trip_users
+  has_many :messages, dependent: :destroy
 
 end

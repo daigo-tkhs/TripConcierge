@@ -13,4 +13,8 @@ class ApplicationController < ActionController::Base
     # プロフィール編集時(account_update)にも nickname を許可
     devise_parameter_sanitizer.permit(:account_update, keys: [:nickname])
   end
+
+  def after_sign_out_path_for(resource_or_scope)
+    new_user_session_path
+  end
 end
