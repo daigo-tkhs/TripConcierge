@@ -7,7 +7,7 @@ Rails.application.routes.draw do
     
     # メッセージ（AIチャット）機能
     # indexアクションがmessages#indexに必要です
-    resources :messages, only: [:index, :create, :update, :destroy] 
+    resources :messages, only: [:index, :create, :edit, :update, :destroy] 
     
     # スポット機能: ★edit を追加し、ビューのエラーを解消★
     resources :spots, only: [:new, :create, :edit, :update, :destroy] do
@@ -15,7 +15,7 @@ Rails.application.routes.draw do
         patch :move
       end
     end
-    
+
     # チェックリスト機能
     resources :checklists, only: [:index, :create, :update]
     
