@@ -102,11 +102,28 @@
                           <% end %>
                         <% end %>
                     </div>
-                      <%= button_to trip_spots_path(@trip), method: :post, params: { spot: { name: spot_data['name'], estimated_cost: spot_data['estimated_cost'], duration: spot_data['duration'], day_number: 1 } }, form: { data: { turbo_frame: "_top" } }, class: "w-full bg-blue-600 text-white text-xs font-bold py-2 rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-1" do %>
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
-                          <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
-                        </svg>
-                        旅程に追加
+                      <%# 日付選択付き追加フォーム %>
+                      <%= form_with url: trip_spots_path(@trip), method: :post, data: { turbo_frame: "_top" }, class: "mt-2" do |f| %>
+                        <%# 隠しフィールドでスポット情報を渡す %>
+                        <%= f.hidden_field 'spot[name]', value: spot_data['name'] %>
+                        <%= f.hidden_field 'spot[estimated_cost]', value: spot_data['estimated_cost'] %>
+                        <%= f.hidden_field 'spot[duration]', value: spot_data['duration'] %>
+                        
+                        <div class="flex gap-2">
+                          <%# 日付選択プルダウン %>
+                          <%= f.select 'spot[day_number]', 
+                              options_for_select(trip_days_options(@trip)), 
+                              {}, 
+                              class: "flex-1 text-xs border-gray-300 rounded-lg focus:border-blue-500 focus:ring-blue-500 py-1.5" %>
+                          
+                          <%# 追加ボタン %>
+                          <%= f.button type: "submit", class: "bg-blue-600 text-white text-xs font-bold py-1.5 px-3 rounded-lg hover:bg-blue-700 transition flex items-center gap-1 flex-shrink-0" do %>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+                              <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+                            </svg>
+                            追加
+                          <% end %>
+                        </div>
                       <% end %>
                     </div>
                   <% end %>

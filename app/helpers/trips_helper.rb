@@ -15,4 +15,18 @@ module TripsHelper
       'bg-gray-100 text-gray-700 border border-gray-200'
     end
   end
+
+  def trip_days_options(trip)
+    days = []
+    # 期間計算（終了日がなければ1日のみ）
+    duration = (trip.end_date ? (trip.end_date - trip.start_date).to_i + 1 : 1)
+    
+    (1..duration).each do |day_num|
+      date = trip.start_date + (day_num - 1).days
+      label = "#{day_num}日目 (#{date.strftime('%m/%d')})"
+      days << [label, day_num]
+    end
+    days
+  end
+  
 end
