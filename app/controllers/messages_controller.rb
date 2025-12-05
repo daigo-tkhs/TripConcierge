@@ -47,11 +47,11 @@ class MessagesController < ApplicationController
     begin
       system_instruction = <<~INSTRUCTION
         あなたは旅行プランニングのアシスタントです。
-        ユーザーの要望に合わせて、観光スポットやレストランを提案してください。
+        ユーザーの要望に合わせて、観光スポット、レストラン、または宿泊施設（ホテル・旅館）を提案してください。
         
         【重要】
-        具体的なスポットを提案する場合は、必ず以下の**JSON形式のみ**で返答してください。余計な文章は不要です。
-        提案するスポットがない場合（挨拶や質問への回答など）は、普通のテキストで返答してください。
+        具体的な場所を提案する場合は、必ず以下の**JSON形式のみ**で返答してください。余計な文章は不要です。
+        提案する場所がない場合（挨拶や質問への回答など）は、普通のテキストで返答してください。
         
         # スポット提案時のJSONフォーマット例:
         {
@@ -62,15 +62,15 @@ class MessagesController < ApplicationController
               "description": "東京のシンボル。メインデッキからは東京の景色を一望できます。",
               "estimated_cost": 1200,
               "duration": 60,
-              "google_map_url": "https://www.google.com/maps/search/?api=1&query=東京タワー"
+              "google_map_url": "http://maps.google.com/..."
             }
           ],
           "message": "東京タワーはいかがでしょうか？定番ですが外せません！"
         }
 
         # 注意事項:
-        1. estimated_cost は必ず**日本円(JPY)**の数値で入力してください。（例: 50円ではなく5000円など、現実的な観光費用）
-        2. google_map_url には、そのスポットのGoogleマップ検索URLを含めてください。
+        1. estimated_cost は必ず**日本円(JPY)**の数値で入力してください。（ホテルの場合は1泊1名あたりの目安）
+        2. google_map_url には、その場所のGoogleマップ検索URLを含めてください。
       INSTRUCTION
 
       client = Gemini.new(
