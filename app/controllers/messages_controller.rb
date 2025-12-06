@@ -24,9 +24,9 @@ class MessagesController < ApplicationController
   end
 
   def update
+    @trip.messages.where("created_at > ?", @message.created_at).destroy_all
+
     if @message.update(message_params)
-      # ★追加: 更新されたらAIに再生成させる
-      # (本来はこれ以降の会話を消すべきですが、今回は簡易的に「修正に対して返答する」形にします)
       generate_ai_response(@message)
     else
       render :edit, status: :unprocessable_entity

@@ -31,7 +31,7 @@
   </div>
 
   <%# --- 2. チャットエリア --- %>
-  <div class="flex-1 p-4 space-y-6 pb-32 overflow-y-auto" id="messages-container">
+  <div class="flex-1 p-4 space-y-6 pb-32 overflow-y-auto" id="messages-container" data-controller="scroll">
     
     <%# 初回メッセージ（固定） %>
     <div class="flex justify-start items-start gap-2">
@@ -163,10 +163,3 @@
   </div>
 
 </div>
-
-<script>
-  window.onload = function() {
-    const element = document.getElementById('scroll-anchor');
-    if (element) element.scrollIntoView({ behavior: "auto" });
-  };
-</script>
