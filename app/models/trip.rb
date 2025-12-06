@@ -2,7 +2,7 @@ class Trip < ApplicationRecord
   # 存在性の検証（必須項目）
   validates :title, presence: true
   validates :start_date, presence: true
-  validates :end_date, presence: true # ★追加: 終了日を必須にする
+  validates :end_date, presence: true
   validates :total_budget, presence: true
   validates :travel_theme, presence: true
 

@@ -42,8 +42,9 @@ class TripsController < ApplicationController
     # --- 日ごとの集計 (ハッシュを作成) ---
     # 例: { 1 => { cost: 5000, time: 180 }, 2 => ... }
     @daily_stats = @spots.group_by(&:day_number).transform_values do |day_spots|
-      cost = day_spots.sum(&:estimated_cost)
-      stay = day_spots.sum(&:duration)
+      # 修正: .to_i を追加して nil を 0 に変換
+      cost = day_spots.sum { |s| s.estimated_cost.to_i }
+      stay = day_spots.sum { |s| s.duration.to_i }
       travel = day_spots.sum { |s| s.travel_time.to_i }
       {
         cost: cost,
