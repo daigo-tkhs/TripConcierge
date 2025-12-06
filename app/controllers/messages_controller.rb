@@ -62,7 +62,8 @@ class MessagesController < ApplicationController
               "name": "東京タワー",
               "description": "東京のシンボル。メインデッキからは東京の景色を一望できます。",
               "estimated_cost": 1200,
-              "duration": 60
+              "duration": 60,
+              "google_map_url": "http://googleusercontent.com/maps.google.com/..."
             }
           ],
           "message": "東京タワーはいかがでしょうか？定番ですが外せません！"
@@ -82,8 +83,22 @@ class MessagesController < ApplicationController
         options: { model: 'gemini-2.0-flash', server_sent_events: false }
       )
 
+      # 会話履歴の構築
+      past_messages = @trip.messages.where.not(id: message_record.id).order(created_at: :asc)
+      
+      contents = []
+      past_messages.each do |msg|
+        contents << { role: 'user', parts: { text: msg.prompt } }
+        if msg.response.present?
+          contents << { role: 'model', parts: { text: msg.response } }
+        end
+      end
+      
+      # 今回のメッセージを追加
+      contents << { role: 'user', parts: { text: message_record.prompt } }
+
       result = client.generate_content({
-        contents: { role: 'user', parts: { text: message_record.prompt } },
+        contents: contents,
         system_instruction: { parts: { text: system_instruction } }
       })
 
@@ -95,8 +110,8 @@ class MessagesController < ApplicationController
           
           if ai_response.present?
             message_record.update!(response: ai_response)
-            # redirect_to は削除（Turbo Streamで更新される場合もあるため、呼び出し元で制御するか、ここでのリダイレクトは維持してもOKですが、今回はそのままにします）
-             redirect_to trip_messages_path(@trip)
+            # 必ずリダイレクト（画面更新）を行う
+            redirect_to trip_messages_path(@trip)
           else
              redirect_to trip_messages_path(@trip), alert: 'AIからの応答テキストが見つかりませんでした。'
           end
@@ -109,7 +124,7 @@ class MessagesController < ApplicationController
       redirect_to trip_messages_path(@trip), alert: "AIとの通信に失敗しました: #{e.message}"
     end
   end
-  # -----------------------------------
+  
 
   def set_trip
     @trip = Trip.shared_with_user(current_user).find(params[:trip_id])
