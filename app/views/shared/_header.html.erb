@@ -1,8 +1,6 @@
 <%# app/views/shared/_header.html.erb %>
-<%# 外側は全幅で背景色をつける %>
-<header class="bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md sticky top-0 z-50 w-full">
-  <%# 内側で幅を制限し、中央寄せ (mx-auto) %>
-  <div class="max-w-md md:max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+<header class="bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md sticky top-0 z-50">
+  <div class="px-4 py-3 flex justify-between items-center">
     
     <div class="logo-area font-bold text-xl tracking-wider">
       <%= link_to root_path, class: "flex items-center gap-2 hover:opacity-80 transition" do %>

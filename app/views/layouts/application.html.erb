@@ -13,10 +13,11 @@
 
   <body class="bg-gray-50 text-gray-800 font-sans antialiased min-h-screen flex flex-col">
     
-    <%# --- アプリ全体のコンテナ（幅制限・中央寄せ・影付き） --- %>
-    <div class="flex-1 w-full max-w-md md:max-w-4xl mx-auto bg-white shadow-xl min-h-screen relative pb-24">
+    <%# --- メインコンテンツコンテナ --- %>
+    <%# 修正: max-w-7xl まで許容し、画面幅に応じて広がるようにする %>
+    <div class="flex-1 w-full max-w-md md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto bg-white shadow-xl relative min-h-screen pb-24">
       
-      <%# --- ヘッダー（コンテナの中に配置することで幅を合わせる） --- %>
+      <%# ヘッダー %>
       <%= render 'shared/header' unless @hide_header %>
 
       <%# フラッシュメッセージ %>
@@ -36,7 +37,7 @@
         <%= yield %>
       </main>
 
-      <%# --- フッター --- %>
+      <%# フッター %>
       <%= render 'shared/footer' %>
     </div>
 
