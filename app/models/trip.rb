@@ -35,8 +35,24 @@ class Trip < ApplicationRecord
   # 2. ユーザーがオーナーである旅程を取得
   scope :owned_by_user, ->(user) { where(owner: user) }
   
-  
-  
+  # --- 権限チェック用メソッド（追加） ---
+
+  # そのユーザーが「所有者(owner)」権限を持っているか
+  def owner?(user)
+    trip_users.find_by(user: user)&.owner?
+  end
+
+  # そのユーザーが「編集可能(owner または editor)」か
+  def editable_by?(user)
+    tu = trip_users.find_by(user: user)
+    tu && (tu.owner? || tu.editor?)
+  end
+
+  # そのユーザーが「閲覧可能(メンバーである)」か
+  def viewable_by?(user)
+    trip_users.exists?(user: user)
+  end
+
   # コールバック：旅程作成後に実行
   after_create :set_owner_as_trip_user
 

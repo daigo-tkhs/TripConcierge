@@ -3,10 +3,9 @@ Rails.application.routes.draw do
 
   # 旅程に関するリソースを定義
   resources :trips do
-    # 旅程にネストする機能（spots, messages, checklists）を定義
+    # 旅程にネストする機能（spots, messages, checklists, trip_user）を定義
     
     # メッセージ（AIチャット）機能
-    # indexアクションがmessages#indexに必要です
     resources :messages, only: [:index, :create, :edit, :update, :destroy] 
     
     # スポット機能: ★edit を追加し、ビューのエラーを解消★
@@ -23,6 +22,9 @@ Rails.application.routes.draw do
     member do
       get 'sharing'
     end
+
+    # メンバー管理機能 (作成と削除のみ)
+    resources :trip_users, only: [:create, :destroy]
   end
 
   # 開発環境でのみメール確認画面を有効化
