@@ -8,5 +8,7 @@ class User < ApplicationRecord
   has_many :trip_users, dependent: :destroy
   has_many :trips, through: :trip_users
   has_many :messages, dependent: :destroy
+  has_many :favorites, dependent: :destroy
+  has_many :favorite_trips, through: :favorites, source: :trip
 
 end

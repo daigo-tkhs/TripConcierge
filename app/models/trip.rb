@@ -18,6 +18,8 @@ class Trip < ApplicationRecord
   has_many :spots, dependent: :destroy
   has_many :messages, dependent: :destroy
   has_many :checklist_items, dependent: :destroy
+  has_many :favorites, dependent: :destroy
+  has_many :favorited_users, through: :favorites, source: :user
 
   # 共有ユーザーとの多対多の関連付け
   has_many :trip_users, dependent: :destroy
@@ -51,6 +53,11 @@ class Trip < ApplicationRecord
   # そのユーザーが「閲覧可能(メンバーである)」か
   def viewable_by?(user)
     trip_users.exists?(user: user)
+  end
+
+  # そのユーザーにお気に入りされているか確認するメソッド
+  def favorited_by?(user)
+    favorites.exists?(user_id: user.id)
   end
 
   # コールバック：旅程作成後に実行
