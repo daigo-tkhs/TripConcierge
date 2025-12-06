@@ -30,7 +30,15 @@
 
         <div>
           <%= f.label :role, "権限", class: "block text-xs font-bold text-gray-500 mb-1" %>
-          <%= f.select :role, [["編集者 (編集可能)", "editor"], ["閲覧者 (見るだけ)", "viewer"]], {}, class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm" %>
+          <% if @trip.editable_by?(current_user) %>
+            <%= f.select :role, [["編集者 (編集可能)", "editor"], ["閲覧者 (見るだけ)", "viewer"]], {}, class: "w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm" %>
+          <% else %>
+            <div class="w-full rounded-lg border border-gray-200 bg-gray-100 px-3 py-2 text-sm text-gray-600">
+              閲覧者 (見るだけ)
+            </div>
+            <%= f.hidden_field :role, value: "viewer" %>
+            <p class="text-xs text-gray-400 mt-1">※あなたは閲覧権限のため、閲覧者のみ招待できます。</p>
+          <% end %>
         </div>
 
         <%= f.button type: "submit", class: "w-full bg-blue-600 text-white font-bold py-2.5 rounded-lg hover:bg-blue-700 transition shadow-sm flex items-center justify-center gap-2" do %>

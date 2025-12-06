@@ -2,6 +2,7 @@ class SpotsController < ApplicationController
   before_action :authenticate_user!
   before_action :set_trip
   before_action :set_spot, only: [:edit, :update, :destroy, :move]
+  before_action :authorize_editor!
 
   def new
     @spot = @trip.spots.build
@@ -43,19 +44,22 @@ class SpotsController < ApplicationController
   private
 
   def set_trip
-    # URLの :trip_id パラメータから旅程を取得し、アクセス権限をチェック
     @trip = Trip.shared_with_user(current_user).find(params[:trip_id])
   rescue ActiveRecord::RecordNotFound
     redirect_to root_path, alert: "指定された旅程が見つからないか、アクセス権がありません。"
   end
 
   def set_spot
-    # 現在の旅程 (@trip) に紐づくスポットのみを検索
     @spot = @trip.spots.find(params[:id])
   rescue ActiveRecord::RecordNotFound
     redirect_to trip_path(@trip), alert: "指定されたスポットが見つかりませんでした。"
   end
-  # ↑↑↑ ここまで ↑↑↑
+
+  def authorize_editor!
+    unless @trip.editable_by?(current_user)
+      redirect_to trip_path(@trip), alert: "編集権限がありません。"
+    end
+  end
 
   def spot_params
     params.require(:spot).permit(:name, :day_number, :estimated_cost, :duration, :booking_url, :reservation_required)
