@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_12_06_032918) do
+ActiveRecord::Schema[7.1].define(version: 2025_12_06_055549) do
   create_table "checklist_items", charset: "utf8mb3", collation: "utf8mb3_general_ci", force: :cascade do |t|
     t.string "name"
     t.boolean "is_checked", default: false, null: false
@@ -18,6 +18,15 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_06_032918) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["trip_id"], name: "index_checklist_items_on_trip_id"
+  end
+
+  create_table "favorites", charset: "utf8mb3", collation: "utf8mb3_general_ci", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "trip_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["trip_id"], name: "index_favorites_on_trip_id"
+    t.index ["user_id"], name: "index_favorites_on_user_id"
   end
 
   create_table "messages", charset: "utf8mb3", collation: "utf8mb3_general_ci", force: :cascade do |t|
@@ -84,6 +93,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_12_06_032918) do
   end
 
   add_foreign_key "checklist_items", "trips"
+  add_foreign_key "favorites", "trips"
+  add_foreign_key "favorites", "users"
   add_foreign_key "messages", "trips"
   add_foreign_key "messages", "users"
   add_foreign_key "spots", "trips"

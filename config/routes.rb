@@ -1,6 +1,9 @@
 Rails.application.routes.draw do
   devise_for :users
 
+  # お気に入り一覧画面
+  resources :favorites, only: [:index]
+
   # 旅程に関するリソースを定義
   resources :trips do
     # 旅程にネストする機能（spots, messages, checklists, trip_user）を定義
@@ -29,6 +32,9 @@ Rails.application.routes.draw do
 
     # メンバー管理機能 (作成と削除のみ)
     resources :trip_users, only: [:create, :destroy]
+
+    # お気に入り機能 (単数形 resource なのでURLにidが含まれません)
+    resource :favorite, only: [:create, :destroy]
   end
 
   # 開発環境でのみメール確認画面を有効化
