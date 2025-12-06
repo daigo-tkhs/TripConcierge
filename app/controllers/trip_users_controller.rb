@@ -15,27 +15,24 @@ class TripUsersController < ApplicationController
 
     # 既にメンバーかチェック
     if @trip.trip_users.exists?(user_id: user.id)
-      redirect_to sharing_trip_path(@trip), alert: "#{user.name || user.email} は既にメンバーです。"
+      redirect_to sharing_trip_path(@trip), alert: "#{user.nickname || user.email} は既にメンバーです。"
       return
     end
 
     # メンバーとして追加 (デフォルトは編集者: editor)
-    # ※ 閲覧者(viewer)を選ばせたい場合は params[:role] を使います
     role = params[:role] || :editor
     
     @trip.trip_users.create!(user: user, permission_level: role)
 
-    redirect_to sharing_trip_path(@trip), notice: "#{user.name || user.email} を招待しました！"
+    redirect_to sharing_trip_path(@trip), notice: "#{user.nickname || user.email} を招待しました！"
   end
 
   # メンバー削除
   def destroy
     trip_user = @trip.trip_users.find(params[:id])
     
-    # 自分自身やオーナーは削除できないようにする制御などが本来は必要
-    # 今回はシンプルに「オーナーだけが他者を削除できる」前提で進めます
-    
-    user_name = trip_user.user.name || trip_user.user.email
+    # ★ここを修正: trip_user.user.name -> trip_user.user.nickname
+    user_name = trip_user.user.nickname || trip_user.user.email
     trip_user.destroy
     
     redirect_to sharing_trip_path(@trip), notice: "#{user_name} をメンバーから削除しました。", status: :see_other

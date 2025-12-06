@@ -1,6 +1,6 @@
 class TripsController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_trip, only: [:show, :edit, :update, :destroy]
+  before_action :set_trip, only: [:show, :edit, :update, :destroy, :sharing]
 
   def index
     @trips = Trip.shared_with_user(current_user)
@@ -50,6 +50,11 @@ class TripsController < ApplicationController
   def destroy
     @trip.destroy
     redirect_to trips_path, notice: '旅程を削除しました。', status: :see_other
+  end
+
+  def sharing
+    # メンバー一覧を取得
+    @trip_users = @trip.trip_users.includes(:user).order(permission_level: :asc)
   end
 
   private
