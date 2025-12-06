@@ -48,6 +48,11 @@ class TripsController < ApplicationController
   end
 
   def destroy
+    unless @trip.owner?(current_user)
+      redirect_to trip_path(@trip), alert: "旅程を削除する権限がありません。"
+      return
+    end
+
     @trip.destroy
     redirect_to trips_path, notice: '旅程を削除しました。', status: :see_other
   end
