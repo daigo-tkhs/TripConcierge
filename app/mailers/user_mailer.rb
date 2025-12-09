@@ -6,13 +6,11 @@ class UserMailer < ApplicationMailer
   end
 
   def invite_to_trip
-    @trip = params[:trip]
-    @inviter = params[:inviter]
-    @token = params[:invitation_token]
-    @invitation_url = invitation_accept_url(
-      token: @token,
-      host: ActionMailer::Base.default_url_options[:host],
-      protocol: ActionMailer::Base.default_url_options[:protocol]
+    @invitation_url = url_for(
+      controller: 'invitations', 
+      action: 'accept', 
+      token: @token, 
+      only_path: false
     )
 
     mail(
