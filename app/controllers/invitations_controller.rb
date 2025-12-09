@@ -4,6 +4,7 @@ class InvitationsController < ApplicationController
   def accept
     @hide_header = true
     @hide_footer = true
+    
     # URLのトークンから招待データを検索
     @invitation = TripInvitation.find_by(token: params[:token])
 
@@ -17,12 +18,16 @@ class InvitationsController < ApplicationController
     if user_signed_in?
       process_join_trip(current_user)
     else
-      # 3. 未ログインなら、専用の受け入れ画面（Step 5-3で作るビュー）を表示
-      # ここで「ログインして参加」か「ゲスト閲覧（プランA）」かを選ばせます
+      # 3. 未ログインなら、セッションにトークンを保存してから受け入れ画面を表示
+      # ログイン/登録後に自動で参加できるようにトークンを保存する
+      session[:invitation_token] = @invitation.token
+      
+      # 4. 専用の受け入れ画面を表示（「ログインして参加」か「ゲスト閲覧」かを選ばせる）
       render :accept
     end
   end
 
+  # POST /invitations/:token/guest
   def accept_guest
     @invitation = TripInvitation.find_by(token: params[:token])
 
@@ -34,10 +39,13 @@ class InvitationsController < ApplicationController
 
     # 閲覧権限(viewer)以外なら弾く（編集者は登録必須のため）
     unless @invitation.role == 'viewer'
-      redirect_to invitation_path(@invitation.token), alert: "編集権限での参加にはログインが必要です。"
+      # トークンをセッションに保存し、ログインを促す（Step 2で追加したロジックが働く）
+      session[:invitation_token] = @invitation.token
+      redirect_to new_user_session_path, alert: "編集権限での参加にはログインが必要です。"
       return
     end
 
+    # ゲスト閲覧処理
     session[:guest_trip_ids] ||= []
     session[:guest_trip_ids] << @invitation.trip_id
     session[:guest_trip_ids].uniq! # 重複を防ぐ
@@ -56,7 +64,8 @@ class InvitationsController < ApplicationController
     
     # すでにメンバーなら何もしない
     if trip.trip_users.exists?(user: user)
-      redirect_to trip_path(trip), notice: "すでにこの旅程のメンバーに参加しています。"
+      # ▼▼▼ 修正: 既にメンバーであっても、成功メッセージに置き換えます ▼▼▼
+      redirect_to trip_path(trip), notice: "旅程「#{trip.title}」へようこそ！"
       return
     end
 
