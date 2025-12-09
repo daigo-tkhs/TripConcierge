@@ -70,7 +70,15 @@
         
         <div class="fixed bottom-24 left-0 w-full z-30 pointer-events-none">
           <div class="w-full max-w-md md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto relative px-4">
-            <%= link_to "新しい旅程を作成", new_trip_path, class: "pointer-events-auto inline-block bg-blue-600 text-white px-6 py-3 rounded-full font-bold hover:bg-blue-700 transition hover:scale-105" %>
+            <div class="mb-6 text-right">
+              <%# rounded-2xl に変更（程よい角丸） %>
+              <%= link_to new_trip_path, class: "pointer-events-auto inline-flex items-center px-6 py-3 border border-transparent text-base font-bold rounded-2xl text-white bg-gradient-to-r from-purple-600 to-blue-500 bg-no-repeat hover:from-purple-700 hover:to-blue-600 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-1" do %>
+                <svg class="-ml-1 mr-2 h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                新しい旅程を作成
+              <% end %>
+            </div>
           </div>
         </div>
 
@@ -82,13 +90,15 @@
   <% if @trips.any? %>
     <div class="fixed bottom-24 left-0 w-full z-30 pointer-events-none">
       <div class="w-full max-w-md md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto relative px-4">
-        <%= link_to new_trip_path, class: "absolute right-8 bottom-0 pointer-events-auto group transition-all duration-200 hover:scale-110" do %>
-          <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        <div class="mb-6 text-right">
+          <%# rounded-2xl に変更 %>
+          <%= link_to new_trip_path, class: "pointer-events-auto inline-flex items-center px-6 py-3 border border-transparent text-base font-bold rounded-2xl text-white bg-gradient-to-r from-purple-600 to-blue-500 bg-no-repeat hover:from-purple-700 hover:to-blue-600 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-1" do %>
+            <svg class="-ml-1 mr-2 h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
-          </div>
-        <% end %>
+            新しい旅程を作成
+          <% end %>
+        </div>
       </div>
     </div>
   <% end %>
