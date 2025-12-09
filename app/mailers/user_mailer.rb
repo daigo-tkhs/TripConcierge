@@ -1,4 +1,7 @@
 class UserMailer < ApplicationMailer
+
+  include Rails.application.routes.url_helpers
+  
   def welcome
     @greeting = "Hi"
     mail to: params[:to], subject: "【TripConcierge】ようこそ！旅の準備を始めましょう"
