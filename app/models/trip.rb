@@ -33,12 +33,14 @@ class Trip < ApplicationRecord
   
   # 権限チェック用メソッド
   def owner?(user)
-    trip_users.find_by(user: user)&.owner?
+    return false if user.nil?
+    self.owner_id == user.id
   end
 
   def editable_by?(user)
+    return true if owner?(user)
     tu = trip_users.find_by(user: user)
-    tu && (tu.owner? || tu.editor?)
+    tu&.editor?
   end
 
   def viewable_by?(user)
