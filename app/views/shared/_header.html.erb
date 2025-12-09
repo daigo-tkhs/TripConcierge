@@ -9,7 +9,7 @@
           <%# ロゴ画像エリア %>
           <%# ▼▼▼ 修正箇所: 背景色(bg-white/10)と枠線関連のクラスを削除し、ホバー時の透明度調整を追加 ▼▼▼ %>
           <div class="flex items-center justify-center group-hover:opacity-90 transition">
-            <% if Rails.application.assets.find_asset('logo.png') %>
+            <% if Rails.application.assets.present? && Rails.application.assets.find_asset('logo.png').present? %>
               <%= image_tag "logo.png", class: "h-12 w-auto object-contain", alt: "TripConcierge Logo" %>
             <% else %>
               <%# 仮アイコン %>
