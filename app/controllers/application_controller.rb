@@ -1,4 +1,5 @@
 class ApplicationController < ActionController::Base
+  before_action :basic_auth
   # Deviseコントローラーが動く時だけ、パラメータ設定メソッドを実行
   before_action :configure_permitted_parameters, if: :devise_controller?
 
@@ -60,5 +61,13 @@ class ApplicationController < ActionController::Base
     end
     
     return nil
+  end
+
+  def basic_auth
+    # ENVに設定されたユーザー名とパスワードを読み込み、認証を要求する
+    authenticate_or_request_with_http_basic do |username, password|
+      # ユーザー名が 'admin' と、パスワードが '2222' であることを確認
+      username == ENV["BASIC_AUTH_USER"] && password == ENV["BASIC_AUTH_PASSWORD"]
+    end
   end
 end
