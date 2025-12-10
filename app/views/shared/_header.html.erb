@@ -9,9 +9,7 @@
           <%# ロゴ画像エリア %>
           <%# ▼▼▼ 修正箇所: 背景色(bg-white/10)と枠線関連のクラスを削除し、ホバー時の透明度調整を追加 ▼▼▼ %>
           <div class="flex items-center justify-center group-hover:opacity-90 transition">
-            <% if Rails.application.assets.present? && Rails.application.assets.find_asset('logo.png').present? %>
-              <%= image_tag "logo.png", class: "h-12 w-auto object-contain", alt: "TripConcierge Logo" %>
-            <% else %>
+            <%= image_tag "logo.png", class: "h-12 w-auto object-contain", alt: "TripConcierge Logo" %>
               <%# 仮アイコン %>
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-9 h-9 text-white">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
