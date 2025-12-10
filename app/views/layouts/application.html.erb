@@ -1,20 +1,22 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>TravelShiori</title>
+    <title>TripConcierge</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
-    
+
+    <%# ▼▼▼ 本番環境用に正しいRailsヘルパーを使用します ▼▼▼ %>
     <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
-    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    
+    <%# application.css は存在しないため削除しました %>
+    
     <%= javascript_importmap_tags %>
   </head>
 
   <body class="bg-gray-50 text-gray-800 font-sans antialiased min-h-screen flex flex-col">
     
     <%# --- メインコンテンツコンテナ --- %>
-    <%# 修正: max-w-7xl まで許容し、画面幅に応じて広がるようにする %>
     <div class="flex-1 w-full max-w-md md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto bg-white shadow-xl relative min-h-screen pb-24">
       
       <%# ヘッダー %>
