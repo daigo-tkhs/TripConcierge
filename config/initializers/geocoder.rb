@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 Geocoder.configure(
   # Street Address lookup
   lookup: :google,
@@ -9,5 +11,5 @@ Geocoder.configure(
   timeout: 5,
 
   # set default units to kilometers:
-  units: :km,
+  units: :km
 )

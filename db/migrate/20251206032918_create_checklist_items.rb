@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class CreateChecklistItems < ActiveRecord::Migration[7.1]
   def change
     create_table :checklist_items, force: true do |t|

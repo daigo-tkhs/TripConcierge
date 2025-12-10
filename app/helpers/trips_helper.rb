@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module TripsHelper
   def theme_badge_class(theme)
     case theme
@@ -20,7 +22,7 @@ module TripsHelper
     days = []
     # 期間計算（終了日がなければ1日のみ）
     duration = (trip.end_date ? (trip.end_date - trip.start_date).to_i + 1 : 1)
-    
+
     (1..duration).each do |day_num|
       date = trip.start_date + (day_num - 1).days
       label = "#{day_num}日目 (#{date.strftime('%m/%d')})"
@@ -28,5 +30,4 @@ module TripsHelper
     end
     days
   end
-  
 end

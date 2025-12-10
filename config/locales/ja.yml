@@ -1,0 +1,55 @@
+# config/locales/ja.yml
+
+ja:
+  messages:
+    trip:
+      create_success: "新しい旅程が作成されました。AIに詳細を相談しましょう！"
+      create_failure: "旅程の作成に失敗しました。必須項目を確認してください。"
+      update_success: "旅程が更新されました。"
+      update_failure: "更新に失敗しました。入力内容を確認してください。"
+      delete_success: "旅程を削除しました。"
+      delete_permission_denied: "旅程を削除する権限がありません。"
+      clone_success: "旅程を複製しました！"
+      not_found: "指定された旅程が見つからないか、アクセス権がありません。"
+
+    spot:
+      create_success: "スポットを追加しました！"
+      update_success: "スポットを更新しました。"
+      delete_success: "スポットを削除しました。"
+      not_found: "指定されたスポットが見つかりませんでした。"
+      permission_denied: "編集権限がありません。"
+      
+    checklist:
+      import_success: "持ち物リストを自動生成しました！"
+      
+    user_message:
+      create_failure: "メッセージを入力してください。"
+      delete_success: "メッセージを削除しました。"
+      not_found: "権限がないか、メッセージが見つかりません。"
+      
+    ai:
+      response_text_not_found: "AIからの応答テキストが見つかりませんでした。"
+      no_valid_response: "AIからの有効な応答がありませんでした。"
+      
+    favorite:
+      create_success: "お気に入りに登録しました"
+      create_failure: "登録に失敗しました"
+      delete_success: "お気に入りを解除しました"
+      
+    invitation:
+      link_invalid: "この招待リンクは無効になっているか、期限切れです。"
+      login_required: "編集権限での参加にはログインが必要です。"
+      guest_join_success: "ゲストとして旅程に参加しました！"
+      approve_failure: "招待の承認に失敗しました。"
+      
+    member:
+      not_found: "指定されたメールアドレスのユーザーは見つかりませんでした。"
+      already_member: "%{user_name} はすでに旅程に参加しています。"
+      invite_success: "%{user_name} を%{role_name}として招待しました！"
+      delete_permission_denied: "メンバーを削除する権限がありません。"
+      member_not_found: "旅程メンバーが見つかりません。"
+      view_permission_denied: "この旅程を閲覧する権限がありません。"
+      
+    mail:
+      welcome_subject: "【TripConcierge】ようこそ！旅の準備を始めましょう"
+      invite_subject: "【TripConcierge】%{inviter_name}さんから旅の招待状が届いています"

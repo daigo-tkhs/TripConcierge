@@ -1,0 +1,49 @@
+# .rubocop.yml (最終修正版)
+
+# 拡張ライブラリの読み込みを新しい推奨方式 (plugins) に変更
+plugins:
+  - rubocop-rails
+  - rubocop-performance
+
+# 全体設定
+AllCops:
+  TargetRubyVersion: 3.2 
+  TargetRailsVersion: 7.1
+  NewCops: enable 
+  Exclude:
+    - 'bin/**/*'
+    - 'db/**/*'
+    - 'config/**/*'
+    - 'node_modules/**/*'
+    - 'vendor/**/*'
+    - 'tmp/**/*'
+    - 'spec/rails_helper.rb'
+    - 'spec/spec_helper.rb'
+    - 'test/**/*'
+    - 'log/**/*'
+    - 'Rakefile'
+    - 'Gemfile'
+    - 'config.ru'
+
+# Layout系の設定
+Layout/EmptyLinesAroundClassBody:
+  Exclude:
+    - 'app/mailers/application_mailer.rb' 
+
+# Style系の設定
+Style/Documentation:
+  Enabled: false 
+
+# 文字列はシングルクォートを強制
+Style/StringLiterals:
+  EnforcedStyle: single_quotes 
+
+Style/FrozenStringLiteralComment:
+  Enabled: true 
+
+# Metrics系の設定（複雑度や行数に関するルール）
+Metrics/MethodLength:
+  Max: 20 
+
+Metrics/AbcSize:
+  Max: 25

@@ -1,13 +1,15 @@
+# frozen_string_literal: true
+
 class TripInvitation < ApplicationRecord
   belongs_to :trip
 
   # 権限定義（TripUserと合わせる想定ですが、ここではシンプルに定義）
   # 0: 閲覧者, 1: 編集者
-  enum role: { viewer: 0, editor: 1 }
+  enum :role, { viewer: 0, editor: 1 }
 
   validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :role, presence: true
-  
+
   # 作成時にトークンと有効期限をセット
   before_validation :generate_token, :set_expiration, on: :create
 

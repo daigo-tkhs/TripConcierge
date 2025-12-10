@@ -1,4 +1,6 @@
-require "active_support/core_ext/integer/time"
+# frozen_string_literal: true
+
+require 'active_support/core_ext/integer/time'
 
 Rails.application.configure do
   # Code is not reloaded between requests.
@@ -10,7 +12,7 @@ Rails.application.configure do
 
   # Full error reports are disabled and caching is turned on.
   config.consider_all_requests_local = false
-  
+
   # Code reloading is disabled in production.
   config.enable_reloading = false
 
@@ -23,7 +25,7 @@ Rails.application.configure do
 
   # Disable serving static files from the `/public` folder by default since
   # Apache or NGINX generally work better for this.
-  config.public_file_server.enabled = ENV["RAILS_SERVE_STATIC_FILES"].present?
+  config.public_file_server.enabled = ENV['RAILS_SERVE_STATIC_FILES'].present?
   config.public_file_server.headers = {
     'Cache-Control' => "public, max-age=#{1.year.to_i}"
   }
@@ -39,7 +41,7 @@ Rails.application.configure do
 
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :local
-  
+
   # Action Mailer Settings
   config.action_mailer.raise_delivery_errors = true
   config.action_mailer.perform_caching = false
@@ -49,33 +51,33 @@ Rails.application.configure do
     user_name: 'apikey',
     password: ENV['SENDGRID_API_KEY'],
     # Renderの公開ドメイン名に修正
-    domain: 'travel-shiori.onrender.com', 
+    domain: 'travel-shiori.onrender.com',
     address: 'smtp.sendgrid.net',
     port: 587,
     authentication: :plain,
     enable_starttls_auto: true
   }
-  
+
   # 致命的なメールリンクの修正 (Renderの公開URLを設定)
   config.action_mailer.default_url_options = { host: 'travel-shiori.onrender.com', protocol: 'https' }
 
   # Log to STDOUT by default
-  config.logger = ActiveSupport::Logger.new(STDOUT)
-                                     .tap    { |logger| logger.formatter = ::Logger::Formatter.new }
-                                     .then { |logger| ActiveSupport::TaggedLogging.new(logger) }
+  config.logger = ActiveSupport::Logger.new($stdout)
+                                       .tap    { |logger| logger.formatter = ::Logger::Formatter.new }
+                                       .then { |logger| ActiveSupport::TaggedLogging.new(logger) }
 
   # Prepend all log lines with the following tags.
-  config.log_tags = [ :request_id ]
+  config.log_tags = [:request_id]
 
   # Info, Warn, Error, Fatal, Unknown
-  config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")
+  config.log_level = ENV.fetch('RAILS_LOG_LEVEL', 'info')
 
   # Do not dump pending migration after rails db:migrate
   config.active_record.dump_schema_after_migration = false
 
-  config.active_storage.queue = :default
-  
-  Rails.application.config.after_initialize do
-    ActiveStorage::Engine.config.active_storage.variant_processor = :vips
-  end
+  # config.active_storage.queue = :default
+
+  # Rails.application.config.after_initialize do
+  #   ActiveStorage::Engine.config.active_storage.variant_processor = :vips
+  # end
 end

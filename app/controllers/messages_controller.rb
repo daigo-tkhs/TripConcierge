@@ -1,7 +1,12 @@
+# app/controllers/messages_controller.rb (全文)
+# frozen_string_literal: true
+
 class MessagesController < ApplicationController
+  include MessagesHelper # <-- ヘルパーのメソッドを使えるようにする
+
   before_action :authenticate_user!
   before_action :set_trip
-  before_action :set_message, only: [:edit, :update, :destroy]
+  before_action :set_message, only: %i[edit update destroy]
 
   def index
     @hide_header = true
@@ -9,133 +14,125 @@ class MessagesController < ApplicationController
     @message = Message.new
   end
 
+  # ... (edit, create, update, destroy メソッドは省略/変更なし) ...
+  def edit; end
+
   def create
     @message = @trip.messages.build(message_params)
     @message.user = current_user
 
     if @message.save
-      generate_ai_response(@message) # AI応答生成をメソッド化
+      generate_ai_response(@message)
     else
-      redirect_to trip_messages_path(@trip), alert: 'メッセージを入力してください。'
+      redirect_to trip_messages_path(@trip), alert: t('messages.user_message.create_failure')
     end
   end
 
-  def edit
-  end
-
   def update
-    @trip.messages.where("created_at > ?", @message.created_at).destroy_all
+    @trip.messages.where('created_at > ?', @message.created_at).destroy_all
 
     if @message.update(message_params)
       generate_ai_response(@message)
     else
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 
   def destroy
     @message.destroy
     respond_to do |format|
-      format.html { redirect_to trip_messages_path(@trip), notice: 'メッセージを削除しました。', status: :see_other }
+      format.html do
+        redirect_to trip_messages_path(@trip),
+                    notice: t('messages.user_message.delete_success'),
+                    status: :see_other
+      end
       format.turbo_stream
     end
   end
 
   private
 
-  # --- AI連携ロジック（共通化） ---
   def generate_ai_response(message_record)
-    begin
-      system_instruction = <<~INSTRUCTION
-        あなたは旅行プランニングのアシスタントです。
-        ユーザーの要望に合わせて、観光スポット、レストラン、または宿泊施設（ホテル・旅館）を提案してください。
-        
-        【重要】
-        具体的な場所を提案する場合は、必ず以下の**JSON形式のみ**で返答してください。余計な文章は不要です。
-        提案する場所がない場合（挨拶や質問への回答など）は、普通のテキストで返答してください。
-        
-        # スポット提案時のJSONフォーマット例:
-        {
-          "is_suggestion": true,
-          "spots": [
-            {
-              "name": "東京タワー",
-              "description": "東京のシンボル。メインデッキからは東京の景色を一望できます。",
-              "estimated_cost": 1200,
-              "duration": 60,
-              "google_map_url": "http://googleusercontent.com/maps.google.com/..."
-            }
-          ],
-          "message": "東京タワーはいかがでしょうか？定番ですが外せません！"
-        }
+    system_instruction, contents = build_request_content(message_record)
 
-        # 注意事項:
-        1. estimated_cost は必ず**日本円(JPY)**の数値で入力してください。（ホテルの場合は1泊1名あたりの目安）
-        2. description は簡潔に魅力的な説明を入れてください。
-      INSTRUCTION
+    raw_response = handle_ai_api_request(system_instruction, contents)
 
-      client = Gemini.new(
-        credentials: {
-          service: 'generative-language-api',
-          version: 'v1beta',
-          api_key: Rails.application.credentials.gemini[:api_key]
-        },
-        options: { model: 'gemini-2.0-flash', server_sent_events: false }
-      )
+    handle_ai_response(message_record, raw_response)
+  rescue StandardError => e
+    Rails.logger.error "Gemini API Error: #{e.message}"
+    redirect_to trip_messages_path(@trip), alert: t('messages.ai.communication_error', error: e.message)
+  end
 
-      # 会話履歴の構築
-      past_messages = @trip.messages.where.not(id: message_record.id).order(created_at: :asc)
-      
-      contents = []
-      past_messages.each do |msg|
-        contents << { role: 'user', parts: { text: msg.prompt } }
-        if msg.response.present?
-          contents << { role: 'model', parts: { text: msg.response } }
-        end
-      end
-      
-      # 今回のメッセージを追加
-      contents << { role: 'user', parts: { text: message_record.prompt } }
+  def handle_ai_api_request(system_instruction, contents)
+    client = Gemini.new(
+      credentials: {
+        service: 'generative-language-api',
+        version: 'v1beta',
+        api_key: Rails.application.credentials.gemini[:api_key]
+      },
+      options: { model: 'gemini-2.0-flash', server_sent_events: false }
+    )
 
-      result = client.generate_content({
-        contents: contents,
-        system_instruction: { parts: { text: system_instruction } }
-      })
+    result = client.generate_content({
+                                       contents: contents,
+                                       system_instruction: { parts: { text: system_instruction } }
+                                     })
 
-      raw_response = result.is_a?(Array) ? result.first : result
-      
-      if raw_response && raw_response['candidates'].present?
-          candidates = raw_response['candidates']
-          ai_response = candidates[0].dig('content', 'parts', 0, 'text')
-          
-          if ai_response.present?
-            message_record.update!(response: ai_response)
-            # 必ずリダイレクト（画面更新）を行う
-            redirect_to trip_messages_path(@trip)
-          else
-             redirect_to trip_messages_path(@trip), alert: 'AIからの応答テキストが見つかりませんでした。'
-          end
+    result.is_a?(Array) ? result.first : result
+  end
+
+  # MethodLength解消のため、システムインストラクションの定義を分離
+  def build_request_content(message_record)
+    # 修正: ヘルパーからシステムインストラクションを取得
+    system_instruction = build_system_instruction_for_ai
+
+    # 会話履歴の構築ロジックを分離
+    contents = build_conversation_contents(message_record)
+
+    [system_instruction, contents]
+  end
+
+  # 会話履歴の構築ロジックを分離
+  def build_conversation_contents(message_record)
+    past_messages = @trip.messages.where.not(id: message_record.id).order(created_at: :asc)
+
+    contents = []
+    past_messages.each do |msg|
+      contents << { role: 'user', parts: [{ text: msg.prompt }] }
+      contents << { role: 'model', parts: [{ text: msg.response }] } if msg.response.present?
+    end
+
+    contents << { role: 'user', parts: [{ text: message_record.prompt }] }
+
+    contents
+  end
+
+  def handle_ai_response(message_record, raw_response)
+    if raw_response && raw_response['candidates'].present?
+      candidates = raw_response['candidates']
+      ai_response = candidates[0].dig('content', 'parts', 0, 'text')
+
+      if ai_response.present?
+        message_record.update!(response: ai_response)
+        redirect_to trip_messages_path(@trip)
       else
-          redirect_to trip_messages_path(@trip), alert: 'AIからの有効な応答がありませんでした。'
+        redirect_to trip_messages_path(@trip), alert: t('messages.ai.response_text_not_found')
       end
-
-    rescue => e
-      Rails.logger.error "Gemini API Error: #{e.message}"
-      redirect_to trip_messages_path(@trip), alert: "AIとの通信に失敗しました: #{e.message}"
+    else
+      redirect_to trip_messages_path(@trip), alert: t('messages.ai.no_valid_response')
     end
   end
-  
 
   def set_trip
     @trip = Trip.shared_with_user(current_user).find(params[:trip_id])
   rescue ActiveRecord::RecordNotFound
-    redirect_to root_path, alert: "指定された旅程が見つからないか、アクセス権がありません。"
+    redirect_to root_path, alert: t('messages.trip.not_found')
   end
 
   def set_message
     @message = @trip.messages.where(user_id: current_user.id).find(params[:id])
   rescue ActiveRecord::RecordNotFound
-    redirect_to trip_messages_path(@trip), alert: "権限がないか、メッセージが見つかりません。"
+    redirect_to trip_messages_path(@trip), alert: t('messages.user_message.not_found')
   end
 
   def message_params

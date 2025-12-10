@@ -1,12 +1,14 @@
+# frozen_string_literal: true
+
 # app/models/trip_user.rb
 
 class TripUser < ApplicationRecord
   belongs_to :user
   belongs_to :trip
-  
+
   # 権限レベルの定義 (db_schema.mdに従いenumを使用)
-  enum permission_level: { viewer: 0, editor: 1, owner: 2 }
-  
+  enum :permission_level, { viewer: 0, editor: 1, owner: 2 }
+
   validates :user_id, uniqueness: { scope: :trip_id }
   validates :permission_level, presence: true
 end

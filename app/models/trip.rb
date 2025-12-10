@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Trip < ApplicationRecord
   # has_one_attached :image
 
@@ -10,37 +12,39 @@ class Trip < ApplicationRecord
 
   # データ型の検証
   validates :total_budget, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
-  
+
   # カスタム検証: 終了日は開始日以降であること
   validate :end_date_after_start_date
 
   # 関連付け
-  belongs_to :owner, class_name: 'User', foreign_key: 'owner_id'
+  belongs_to :owner, class_name: 'User'
   has_many :spots, dependent: :destroy
   has_many :messages, dependent: :destroy
   has_many :checklist_items, dependent: :destroy
   has_many :trip_users, dependent: :destroy
   has_many :users, through: :trip_users
   has_many :trip_invitations, dependent: :destroy
-  
+
   # お気に入り機能
   has_many :favorites, dependent: :destroy
   has_many :favorited_users, through: :favorites, source: :user
 
   # スコープ
-  scope :shared_with_user, ->(user) do
-    joins(:trip_users).where('trip_users.user_id = ?', user.id).distinct
-  end
+  scope :shared_with_user, lambda { |user|
+    joins(:trip_users).where(trip_users: { user_id: user.id }).distinct
+  }
   scope :owned_by_user, ->(user) { where(owner: user) }
-  
+
   # 権限チェック用メソッド
   def owner?(user)
     return false if user.nil?
-    self.owner_id == user.id
+
+    owner_id == user.id
   end
 
   def editable_by?(user)
     return true if owner?(user)
+
     tu = trip_users.find_by(user: user)
     tu&.editor?
   end
@@ -51,6 +55,7 @@ class Trip < ApplicationRecord
 
   def favorited_by?(user)
     return false if user.nil? # ★この行を追加！ゲストなら「お気に入り」判定をfalseにする
+
     favorites.exists?(user_id: user.id)
   end
 
@@ -71,8 +76,8 @@ class Trip < ApplicationRecord
   def end_date_after_start_date
     return if end_date.blank? || start_date.blank?
 
-    if end_date < start_date
-      errors.add(:end_date, "は開始日より後の日付を選択してください")
-    end
+    return unless end_date < start_date
+
+    errors.add(:end_date, 'は開始日より後の日付を選択してください')
   end
 end
