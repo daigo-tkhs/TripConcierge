@@ -6,7 +6,7 @@ class Spot < ApplicationRecord
 
   acts_as_list scope: %i[trip_id day_number]
 
-  before_save :set_position, on: :create
+  before_save :set_position, if: :new_record?
   before_save :calculate_travel_time_from_previous, if: -> { saved_change_to_latitude? || saved_change_to_longitude? }
 
   enum :category, { sightseeing: 0, restaurant: 1, accommodation: 2, other: 3 }
