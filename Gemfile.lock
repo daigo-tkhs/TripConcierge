@@ -173,6 +173,9 @@ GEM
     hurley (0.2)
     i18n (1.14.7)
       concurrent-ruby (~> 1.0)
+    image_processing (1.14.0)
+      mini_magick (>= 4.9.5, < 6)
+      ruby-vips (>= 2.0.17, < 3)
     importmap-rails (2.2.2)
       actionpack (>= 6.0.0)
       activesupport (>= 6.0.0)
@@ -211,6 +214,8 @@ GEM
       net-smtp
     marcel (1.1.0)
     matrix (0.4.3)
+    mini_magick (5.3.1)
+      logger
     mini_mime (1.1.5)
     minitest (5.26.2)
     msgpack (1.8.0)
@@ -304,6 +309,9 @@ GEM
     retriable (2.1.0)
     rexml (3.4.4)
     rolify (6.0.1)
+    ruby-vips (2.2.5)
+      ffi (~> 1.12)
+      logger
     rubyzip (3.2.2)
     securerandom (0.4.1)
     selenium-webdriver (4.38.0)
@@ -376,6 +384,7 @@ DEPENDENCIES
   gemini-ai (~> 4.3)
   geocoder (~> 1.8)
   google_maps_service
+  image_processing (~> 1.14)
   importmap-rails
   jbuilder
   letter_opener_web

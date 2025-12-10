@@ -1,4 +1,6 @@
 class Trip < ApplicationRecord
+  has_one_attached :image
+  
   # 存在性の検証（必須項目）
   validates :title, presence: true
   validates :start_date, presence: true
