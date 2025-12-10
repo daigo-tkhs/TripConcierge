@@ -1,12 +1,12 @@
 class Trip < ApplicationRecord
   has_one_attached :image
-  
+
   # 存在性の検証（必須項目）
-  validates :title, presence: true
+  validates :title, presence: true, length: { maximum: 100 }, unless: :was_attached?
   validates :start_date, presence: true
   validates :end_date, presence: true
   validates :total_budget, presence: true
-  validates :travel_theme, presence: true
+  validates :travel_theme, presence: true, unless: :was_attached?
 
   # データ型の検証
   validates :total_budget, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
@@ -52,6 +52,10 @@ class Trip < ApplicationRecord
   def favorited_by?(user)
     return false if user.nil? # ★この行を追加！ゲストなら「お気に入り」判定をfalseにする
     favorites.exists?(user_id: user.id)
+  end
+
+  def was_attached?
+    self.image.attached?
   end
 
   # コールバック
