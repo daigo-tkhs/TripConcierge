@@ -3,9 +3,8 @@
 <div class="pb-24">
   
   <%# --- 1. 詳細画面専用ヘッダー --- %>
-  <%# ヘッダー自体は画面幅いっぱいに広げるが、中身は中央寄せにする %>
   <div class="bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md sticky top-0 z-50">
-    <div class="max-w-4xl mx-auto px-4 py-4">
+    <div class="max-w-7xl mx-auto px-4 py-4">
       <div class="flex items-start justify-between gap-3">
         <%= link_to root_path, class: "p-2 hover:bg-white/20 rounded-full transition-colors flex-shrink-0" do %>
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
@@ -69,8 +68,8 @@
     </div>
   </div>
 
-  <%# --- メインコンテンツ: 幅を max-w-4xl に制限し中央寄せ (シングルカラム) --- %>
-  <div class="max-w-4xl mx-auto p-4 space-y-6">
+  <%# --- メインコンテンツ --- %>
+  <div class="max-w-7xl mx-auto p-4 space-y-6">
     
     <%# 2. 旅程サマリーカード %>
     <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
@@ -283,7 +282,6 @@
   </div>
 
   <%# --- 4. AIチャットボタン (FAB) --- %>
-  <%# 配置コンテナを index.html.erb と統一 (max-w-md md:max-w-4xl lg:max-w-6xl xl:max-w-7xl) %>
   <% if @trip %>
     <div class="fixed bottom-24 left-0 w-full z-30 pointer-events-none">
       <div class="w-full max-w-md md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto relative px-4">

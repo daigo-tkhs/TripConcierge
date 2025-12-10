@@ -1,23 +1,45 @@
 <%# app/views/trips/edit.html.erb %>
 
-<div class="pb-24 px-4 pt-6">
-  <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold text-gray-900">旅程の編集</h1>
-    <%= link_to "戻る", trip_path(@trip), class: "text-sm text-gray-500 hover:text-blue-600" %>
+<div class="pb-24">
+  
+  <%# --- 1. 共通デザインヘッダー (show.html.erb と統一) --- %>
+  <div class="bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-4">
+      <div class="flex items-center justify-between gap-3">
+        <%# 左側: 戻るボタン %>
+        <%= link_to trip_path(@trip), class: "p-2 hover:bg-white/20 rounded-full transition-colors flex-shrink-0" do %>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+          </svg>
+        <% end %>
+
+        <%# 中央: タイトル %>
+        <div class="flex-1 pt-1">
+          <h1 class="text-lg font-bold leading-tight mb-1">旅程の編集</h1>
+          <div class="flex items-center gap-2 text-blue-100 text-xs">
+            <span><%= @trip.title %></span>
+          </div>
+        </div>
+
+        <%# 右側: ボタン群なし (空のdivでスペースを確保するか、何も置かない) %>
+      </div>
+    </div>
   </div>
 
-  <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-    <%# パーシャル呼び出し %>
-    <%= render 'form', trip: @trip, btn_text: "更新する" %>
-    
-    <%# 削除ボタンエリア %>
-    <% if @trip.owner?(current_user) %>
-      <div class="mt-10 pt-6 border-t border-gray-100">
-        <h3 class="text-xs font-bold text-red-600 mb-2">削除エリア</h3>
-        <p class="text-xs text-gray-500 mb-3">この操作は取り消せません。</p>
-        <%= button_to "この旅程を削除する", trip_path(@trip), method: :delete, data: { turbo_confirm: "本当に削除しますか？" }, class: "w-full bg-red-50 text-red-600 font-bold py-2.5 rounded-lg border border-red-100 hover:bg-red-100 transition text-sm cursor-pointer" %>
-      </div>
-    <% end %>
+  <%# --- メインコンテンツ --- %>
+  <div class="max-w-3xl mx-auto px-4 pt-6">
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+      <%# パーシャル呼び出し %>
+      <%= render 'form', trip: @trip, btn_text: "更新する" %>
+      
+      <%# 削除ボタンエリア %>
+      <% if @trip.owner?(current_user) %>
+        <div class="mt-10 pt-6 border-t border-gray-100">
+          <h3 class="text-xs font-bold text-red-600 mb-2">削除エリア</h3>
+          <p class="text-xs text-gray-500 mb-3">この操作は取り消せません。</p>
+          <%= button_to "この旅程を削除する", trip_path(@trip), method: :delete, data: { turbo_confirm: "本当に削除しますか？" }, class: "w-full bg-red-50 text-red-600 font-bold py-2.5 rounded-lg border border-red-100 hover:bg-red-100 transition text-sm cursor-pointer" %>
+        </div>
+      <% end %>
     </div>
   </div>
 </div>
