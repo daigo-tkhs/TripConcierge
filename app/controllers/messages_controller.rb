@@ -2,8 +2,7 @@
 # frozen_string_literal: true
 
 class MessagesController < ApplicationController
-  include MessagesHelper # <-- ヘルパーのメソッドを使えるようにする
-
+  
   before_action :authenticate_user!
   before_action :set_trip
   before_action :set_message, only: %i[edit update destroy]
@@ -84,11 +83,10 @@ class MessagesController < ApplicationController
   # MethodLength解消のため、システムインストラクションの定義を分離
   def build_request_content(message_record)
     # 修正: ヘルパーからシステムインストラクションを取得
-    system_instruction = build_system_instruction_for_ai
+    system_instruction = helpers.build_system_instruction_for_ai
 
     # 会話履歴の構築ロジックを分離
     contents = build_conversation_contents(message_record)
-
     [system_instruction, contents]
   end
 
