@@ -19,8 +19,7 @@
     <div id="image-preview" data-file-preview-target="previewContainer" class="mb-2">
       <% if trip.image.attached? %>
         <%# 既存の画像がある場合は表示 %>
-        <%= image_tag trip.image.variant(resize_to_limit: [400, 400]), 
-                      class: "w-full sm:w-64 h-auto rounded-lg shadow-md border border-gray-200 object-cover" %>
+        <%= image_tag trip.image, class: "w-full sm:w-64 h-auto rounded-lg shadow-md border border-gray-200 object-cover" %>
       <% else %>
         <%# 画像がない場合のプレースホルダー %>
         <div class="w-full sm:w-64 h-40 bg-gray-100 rounded-lg shadow-sm border border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-sm">

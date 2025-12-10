@@ -20,9 +20,7 @@
               <div class="w-28 sm:w-full h-full sm:h-40 bg-gray-200 flex-shrink-0 flex items-center justify-center text-gray-400 relative overflow-hidden group-hover:opacity-90 transition">
                 <% if trip.image.attached? %>
                   <%# 画像が添付されている場合: リサイズして表示 %>
-                  <%= image_tag trip.image.variant(resize_to_fill: [400, 400]), 
-                                class: "w-full h-full object-cover", 
-                                alt: "#{trip.title}の画像" %>
+                  <%= image_tag trip.image, class: "w-full h-full object-cover", alt: "#{trip.title}の画像" %>
                 <% else %>
                   <%# 画像がない場合: 既存のアイコンを表示 %>
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 sm:w-12 sm:h-12">
