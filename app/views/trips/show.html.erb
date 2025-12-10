@@ -1,5 +1,4 @@
-<%# app/views/trips/show.html.erb %>
-<% @hide_header = true %>
+<%# app/views/trips/show.html.erb - 画像機能一時無効化版 %>
 
 <div class="pb-24">
   
@@ -283,6 +282,7 @@
   </div>
 
   <%# --- 4. AIチャットボタン (FAB) --- %>
+  <%# 配置コンテナを index.html.erb と統一 (max-w-md md:max-w-4xl lg:max-w-6xl xl:max-w-7xl) %>
   <% if @trip %>
     <div class="fixed bottom-24 left-0 w-full z-30 pointer-events-none">
       <div class="w-full max-w-md md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto relative px-4">
