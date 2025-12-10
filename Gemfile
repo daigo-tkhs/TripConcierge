@@ -52,4 +52,6 @@ gem "google_maps_service"
 gem 'acts_as_list'
 
 gem "dotenv-rails", groups: [:development, :test]
-gem "image_processing", "~> 1.14"
+
+gem 'image_processing', '~> 1.2', require: 'image_processing/vips'
+

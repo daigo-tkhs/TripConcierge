@@ -28,38 +28,18 @@ Rails.application.configure do
     'Cache-Control' => "public, max-age=#{1.year.to_i}"
   }
 
-  # Compress CSS using a preprocessor.
-  # config.assets.css_compressor = :sass
-
   # Do not fallback to assets pipeline if a precompiled asset is missing.
   config.assets.compile = false
 
   # Enable automatic file revisioning based on file digests.
   config.assets.digest = true
 
-  # Defaults to nil and all registered servers are used.
-  # config.action_cable.allowed_request_origins = [ "http://example.com", /http:\/\/example.*/ ]
-
   # Disable generation of digests for original assets.
   config.assets.precompile_uncompressed = true
-
-  # Specifies the header that your server uses for sending files.
-  # config.action_dispatch.x_sendfile_header = 'X-Sendfile' # for Apache
-  # config.action_dispatch.x_sendfile_header = 'X-Accel-Redirect' # for NGINX
 
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :local
   
-  # ▼ ベーシック認証のミドルウェアはApplicationControllerに移動したため削除
-  # config.middleware.use Rack::Auth::Basic do |...| ... end  <- このブロック全体を削除
-
-  # Mount Action Cable outside main process or thread
-  # config.action_cable.mount_path = nil
-  # config.action_cable.url = "wss://example.com/cable"
-  
-  # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
-  # config.force_ssl = true
-
   # Action Mailer Settings
   config.action_mailer.raise_delivery_errors = true
   config.action_mailer.perform_caching = false
@@ -68,7 +48,7 @@ Rails.application.configure do
   config.action_mailer.smtp_settings = {
     user_name: 'apikey',
     password: ENV['SENDGRID_API_KEY'],
-    # ▼ Renderの公開ドメイン名に修正
+    # Renderの公開ドメイン名に修正
     domain: 'travel-shiori.onrender.com', 
     address: 'smtp.sendgrid.net',
     port: 587,
@@ -76,19 +56,13 @@ Rails.application.configure do
     enable_starttls_auto: true
   }
   
-  # ▼ 🚨 致命的なメールリンクの修正 🚨 (Renderの公開URLを設定)
+  # 致命的なメールリンクの修正 (Renderの公開URLを設定)
   config.action_mailer.default_url_options = { host: 'travel-shiori.onrender.com', protocol: 'https' }
-
-  # Assume all access to the app is coming from a trusted proxy.
-  # config.action_controller.trusted_proxies = %r{
-  #   ^192\.168\.1\.1$
-  #   ^e45f10a1\.ngrok\.io$
-  # }i
 
   # Log to STDOUT by default
   config.logger = ActiveSupport::Logger.new(STDOUT)
-                                       .tap  { |logger| logger.formatter = ::Logger::Formatter.new }
-                                       .then { |logger| ActiveSupport::TaggedLogging.new(logger) }
+                                     .tap    { |logger| logger.formatter = ::Logger::Formatter.new }
+                                     .then { |logger| ActiveSupport::TaggedLogging.new(logger) }
 
   # Prepend all log lines with the following tags.
   config.log_tags = [ :request_id ]
@@ -96,9 +70,12 @@ Rails.application.configure do
   # Info, Warn, Error, Fatal, Unknown
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")
 
-  # Use default logging formatter so that PID and timestamp are not suppressed.
-  # config.log_formatter = ::Logger::Formatter.new
-
   # Do not dump pending migration after rails db:migrate
   config.active_record.dump_schema_after_migration = false
+
+  config.active_storage.queue = :default
+  
+  Rails.application.config.after_initialize do
+    ActiveStorage::Engine.config.active_storage.variant_processor = :vips
+  end
 end
