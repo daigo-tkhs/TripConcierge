@@ -2,10 +2,6 @@
 # frozen_string_literal: true
 
 class UserMailer < ApplicationMailer
-  # ActionMailerのconfig/environments.rbの設定をジョブ実行環境に確実に適用させる
-  # この設定がジョブの実行時にホストとプロトコルを保証します。
-  self.default_url_options = Rails.application.config.action_mailer.default_url_options
-  
   include Rails.application.routes.url_helpers
 
   def welcome
@@ -19,7 +15,11 @@ class UserMailer < ApplicationMailer
     @trip = @invitation.trip
     
     # invitation_url の呼び出しはホスト設定があれば問題なし
-    @invite_url = invitation_url(@invitation.token)
+    host = Rails.env.production? ? 'travel-shiori.onrender.com' : 'localhost'
+    port = Rails.env.production? ? nil : 3000
+    protocol = Rails.env.production? ? 'https' : 'http'
+
+    @invite_url = invitation_url(@invitation.token, host: host, port: port, protocol: protocol)
 
     subject = t('messages.mail.invite_subject', inviter_name: @inviter.nickname || @inviter.email)
 
@@ -28,4 +28,5 @@ class UserMailer < ApplicationMailer
       subject: subject
     )
   end
+  
 end
