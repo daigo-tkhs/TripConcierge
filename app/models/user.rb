@@ -6,6 +6,7 @@ class User < ApplicationRecord
          :recoverable, :rememberable, :validatable
 
   validates :nickname, presence: true
+  validates :nickname, presence: true, length: { maximum: 50 }
   has_many :owned_trips, class_name: 'Trip', foreign_key: 'owner_id', dependent: :destroy, inverse_of: :owner
   has_many :trip_users, dependent: :destroy
   has_many :trips, through: :trip_users
