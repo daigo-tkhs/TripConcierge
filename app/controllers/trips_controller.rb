@@ -79,12 +79,16 @@ class TripsController < ApplicationController
     calculate_spot_totals
 
     @has_checklist = @trip.checklist_items.any?
-    @invitation_link = trip_invitation_url(@trip.invitation_token)
+    
+    # 修正: ルーティングエラーとnilエラーを防止
+    token = @trip.invitation_token
+    @invitation_link = token ? invitation_url(token) : nil
   end
 
   def calculate_spot_totals
-    @total_travel_time_minutes = @spots.sum(&:travel_time)
-    @total_spot_cost = @spots.sum(&:estimated_cost)
+    # 修正: SQL集計(.sum(:column))に変更し、nilが含まれていてもエラーにならないように修正
+    @total_travel_time_minutes = @spots.sum(:travel_time).to_i
+    @total_spot_cost = @spots.sum(:estimated_cost).to_i
   end
 
   def set_trip
