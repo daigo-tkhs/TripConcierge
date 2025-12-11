@@ -54,9 +54,8 @@
 
       <div class="space-y-4">
         
-        <%# 1. ログイン/参加ボタン (常に表示) %>
+        <%# 1. ログイン/参加ボタン (そのまま) %>
         <% if user_signed_in? %>
-          <%# ログイン済みの場合: 参加確定ボタン %>
           <%= button_to join_invitation_path(@invitation.token), method: :post, class: "w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition cursor-pointer" do %>
             参加を確定する
           <% end %>
@@ -65,7 +64,6 @@
           </p>
 
         <% else %>
-          <%# 未ログインの場合: ログイン画面へのリンク %>
           <%= link_to new_user_session_path, class: "w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition" do %>
             ログイン / 新規登録して参加
           <% end %>
@@ -74,28 +72,28 @@
           </p>
         <% end %>
 
-        <%# 2. ゲスト閲覧ボタン (閲覧権限なら、ログイン状態に関わらず常に表示) %>
-        <% if @invitation.role == 'viewer' %>
-          <div class="relative py-2">
-            <div class="absolute inset-0 flex items-center">
-              <div class="w-full border-t border-gray-300"></div>
-            </div>
-            <div class="relative flex justify-center text-sm">
-              <span class="px-2 bg-white text-gray-500">または</span>
-            </div>
+        <div class="relative py-2">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-gray-300"></div>
           </div>
-          
-          <%= button_to accept_guest_invitation_path(token: @invitation.token), method: :post, class: "cursor-pointer w-full flex justify-center py-3 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition" do %>
-            登録せずにゲストとして閲覧
-          <% end %>
-          
+          <div class="relative flex justify-center text-sm">
+            <span class="px-2 bg-white text-gray-500">または</span>
+          </div>
+        </div>
+        
+        <%= button_to accept_guest_invitation_path(token: @invitation.token), method: :post, class: "cursor-pointer w-full flex justify-center py-3 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition" do %>
+          登録せずにゲストとして閲覧
+        <% end %>
+        
+        <%# 編集者権限でゲスト参加する場合の注記 %>
+        <% if @invitation.role == 'editor' %>
+          <p class="text-xs text-center text-orange-600 mt-2">
+            ※ゲスト参加の場合、編集権限があっても<strong>閲覧のみ</strong>となります。<br>
+            編集するにはログインして参加してください。
+          </p>
+        <% else %>
           <p class="text-xs text-center text-gray-400 mt-2">
             ※ゲスト閲覧はブラウザを閉じると終了します
-          </p>
-        <% elsif !user_signed_in? %>
-          <%# 編集権限で未ログインの場合のみ注意書きを表示 %>
-          <p class="mt-4 text-xs text-center text-yellow-600 bg-yellow-50 p-2 rounded">
-            ※編集権限での参加にはアカウント登録が必要です。
           </p>
         <% end %>
       </div>

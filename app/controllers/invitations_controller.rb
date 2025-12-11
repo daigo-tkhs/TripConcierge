@@ -46,17 +46,16 @@ class InvitationsController < ApplicationController
   end
 
   # POST /invitations/:token/guest
-  def accept_guest
-    # 編集権限の場合はゲスト参加不可（ログインを促す）
-    if @invitation.role == 'editor'
-      redirect_to invitation_path(@invitation.token), alert: t('messages.invitation.login_required')
-      return
-    end
-
-    # 閲覧権限(viewer)の場合のみセッションにトークンを保存して閲覧許可
+  def accept_guest    
     if @invitation.valid_invitation?
       session[:guest_token] = @invitation.token
-      redirect_to trip_path(@invitation.trip), notice: t('messages.invitation.guest_join_success')
+      # ユーザーへの通知メッセージを出し分け
+      if @invitation.role == 'editor'
+        flash[:notice] = 'ゲストとして閲覧します。（編集機能を利用するにはログインが必要です）'
+      else
+        flash[:notice] = t('messages.invitation.guest_join_success')
+      end
+      redirect_to trip_path(@invitation.trip)
     else
       redirect_to root_path, alert: t('messages.invitation.link_invalid')
     end
