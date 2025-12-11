@@ -63,7 +63,11 @@ class Trip < ApplicationRecord
     favorites.exists?(user_id: user.id)
   end
 
+  # ▼▼▼ 修正: TripsControllerのエラー解消のため追記 ▼▼▼
+  # 最新のエラー (undefined method 'invitation_token') を解消するメソッド
+  # 共有リンクに必要なトークンを返す
   def invitation_token
+    # シンプルに trip_invitations の中から最初のトークンを返す (nil許容)
     trip_invitations.first&.token
   end
   
