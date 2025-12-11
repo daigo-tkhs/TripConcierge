@@ -78,6 +78,14 @@ class TripsController < ApplicationController
 
     calculate_spot_totals
 
+    # 修正: nilが含まれていてもエラーにならないよう .to_i を使用するブロック形式に変更
+    @daily_stats = @spots.group_by(&:day_number).transform_values do |day_spots|
+      {
+        cost: day_spots.sum { |s| s.estimated_cost.to_i },
+        time: day_spots.sum { |s| s.travel_time.to_i }
+      }
+    end
+
     @has_checklist = @trip.checklist_items.any?
     
     # 修正: ルーティングエラーとnilエラーを防止
