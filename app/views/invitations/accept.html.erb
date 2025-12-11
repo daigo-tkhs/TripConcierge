@@ -26,6 +26,24 @@
   <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
     <div class="bg-white py-8 px-4 shadow-xl sm:rounded-lg sm:px-10">
       
+      <%# エラーメッセージ表示エリア %>
+      <% if flash[:alert] %>
+        <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+              </svg>
+            </div>
+            <div class="ml-3">
+              <p class="text-sm text-red-700">
+                <%= flash[:alert] %>
+              </p>
+            </div>
+          </div>
+        </div>
+      <% end %>
+
       <%# 旅程情報 %>
       <div class="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-6 text-center">
         <h3 class="text-lg font-bold text-gray-800"><%= @invitation.trip.title %></h3>
@@ -36,9 +54,9 @@
 
       <div class="space-y-4">
         
-        <%# ▼▼▼ 修正: ログイン状態によるボタンの出し分け ▼▼▼ %>
+        <%# 1. ログイン/参加ボタン (常に表示) %>
         <% if user_signed_in? %>
-          <%# ログイン済みの場合: 参加確定ボタン (POST) %>
+          <%# ログイン済みの場合: 参加確定ボタン %>
           <%= button_to join_invitation_path(@invitation.token), method: :post, class: "w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition cursor-pointer" do %>
             参加を確定する
           <% end %>
@@ -55,9 +73,8 @@
             ※ログイン後に自動的にこの画面に戻ります
           </p>
         <% end %>
-        <%# ▲▲▲ 修正終わり ▲▲▲ %>
 
-        <%# 2. ゲスト閲覧ボタン (閲覧権限の場合のみ) %>
+        <%# 2. ゲスト閲覧ボタン (閲覧権限なら、ログイン状態に関わらず常に表示) %>
         <% if @invitation.role == 'viewer' %>
           <div class="relative py-2">
             <div class="absolute inset-0 flex items-center">
@@ -76,6 +93,7 @@
             ※ゲスト閲覧はブラウザを閉じると終了します
           </p>
         <% elsif !user_signed_in? %>
+          <%# 編集権限で未ログインの場合のみ注意書きを表示 %>
           <p class="mt-4 text-xs text-center text-yellow-600 bg-yellow-50 p-2 rounded">
             ※編集権限での参加にはアカウント登録が必要です。
           </p>
