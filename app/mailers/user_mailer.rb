@@ -3,9 +3,9 @@
 
 class UserMailer < ApplicationMailer
   # ActionMailerのconfig/environments.rbの設定をジョブ実行環境に確実に適用させる
+  # この設定がジョブの実行時にホストとプロトコルを保証します。
   self.default_url_options = Rails.application.config.action_mailer.default_url_options
   
-  # メーラー内でルーティングヘルパーを使うためにインクルード（環境依存のバグ対策）
   include Rails.application.routes.url_helpers
 
   def welcome
@@ -18,8 +18,7 @@ class UserMailer < ApplicationMailer
     @inviter = params[:inviter]
     @trip = @invitation.trip
     
-    # ここで self.default_url_options にホストとプロトコルが設定されているため、
-    # invitation_url は絶対URLを正しく生成できる
+    # invitation_url の呼び出しはホスト設定があれば問題なし
     @invite_url = invitation_url(@invitation.token)
 
     subject = t('messages.mail.invite_subject', inviter_name: @inviter.nickname || @inviter.email)
