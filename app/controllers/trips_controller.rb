@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
 class TripsController < ApplicationController
+  # 【重要】set_tripのonlyリストに invite を追加
   before_action :authenticate_user!
-  before_action :set_trip, only: %i[show edit update destroy sharing clone]
+  before_action :set_trip, only: %i[show edit update destroy sharing clone invite]
   before_action :check_trip_owner, only: %i[edit update destroy]
 
   skip_before_action :basic_auth, only: [:index]
@@ -14,7 +15,6 @@ class TripsController < ApplicationController
   end
 
   def show
-    # 詳細画面では共通ヘッダーを非表示にする
     @hide_header = true
     prepare_trip_show_data
   end
@@ -55,12 +55,27 @@ class TripsController < ApplicationController
   end
 
   def sharing
-    # 修正: ビューで参照している @trip_users を定義
-    # buildによる新規オブジェクトが混ざらないよう、保存済みのみを取得
     @trip_users = @trip.trip_users.includes(:user).where.not(id: nil)
-
     @trip_user = @trip.trip_users.build
     @trip_invitation = @trip.trip_invitations.build
+  end
+
+  def invite
+    @trip_invitation = @trip.trip_invitations.build(invitation_params)
+    @trip_invitation.sender = current_user # 送信者をセット (モデルに sender 関連付けが必要)
+
+    if @trip_invitation.save
+      # メール送信処理 (UserMailerの実装に依存)
+      UserMailer.with(invitation: @trip_invitation, inviter: current_user).invite_email.deliver_later
+      
+      redirect_to sharing_trip_path(@trip), notice: t('messages.invitation.sent_success', default: '招待状を送信しました。')
+    else
+      # エラー時の再表示用データセット
+      @trip_users = @trip.trip_users.includes(:user).where.not(id: nil)
+      @trip_user = @trip.trip_users.build
+      flash.now[:alert] = t('messages.invitation.send_failure', default: '招待の送信に失敗しました。入力内容を確認してください。')
+      render :sharing, status: :unprocessable_content
+    end
   end
 
   def clone
@@ -84,7 +99,6 @@ class TripsController < ApplicationController
 
     calculate_spot_totals
 
-    # 日別データの計算 (nil対策済み)
     @daily_stats = @spots.group_by(&:day_number).transform_values do |day_spots|
       {
         cost: day_spots.sum { |s| s.estimated_cost.to_i },
@@ -94,13 +108,11 @@ class TripsController < ApplicationController
 
     @has_checklist = @trip.checklist_items.any?
     
-    # 修正: ルーティングエラーとnilエラーを防止
     token = @trip.invitation_token
     @invitation_link = token ? invitation_url(token) : nil
   end
 
   def calculate_spot_totals
-    # 修正: SQL集計(.sum(:column))に変更し、nilが含まれていてもエラーにならないように修正
     @total_travel_time_minutes = @spots.sum(:travel_time).to_i
     @total_estimated_cost = @spots.sum(:estimated_cost).to_i 
   end
@@ -119,5 +131,9 @@ class TripsController < ApplicationController
 
   def trip_params
     params.require(:trip).permit(:title, :start_date, :end_date, :total_budget, :travel_theme)
+  end
+  
+  def invitation_params
+    params.require(:trip_invitation).permit(:email, :role)
   end
 end
