@@ -12,6 +12,13 @@ class InvitationsController < ApplicationController
 
     # 未ログインの場合、ログイン後にこの画面に戻ってくるよう保存
     store_location_for(:user, request.fullpath) unless user_signed_in?
+    
+    # ログインユーザーが既にメンバーかチェック
+    if user_signed_in? && @invitation.trip.trip_users.exists?(user: current_user)
+      flash[:notice] = t('messages.member.welcome_existing', trip_title: @invitation.trip.title)
+      redirect_to trip_path(@invitation.trip)
+      return
+    end
   end
 
   # POST /invitations/:token/join
@@ -26,35 +33,30 @@ class InvitationsController < ApplicationController
 
     trip = @invitation.trip
 
-    # すでにメンバーに参加している場合のチェック
-    if trip.trip_users.exists?(user: current_user)
-      redirect_to trip_path(trip), notice: t('messages.member.welcome_existing', trip_title: trip.title)
-      return
-    end
-
     # メンバー追加処理
     TripUser.create!(
       trip: trip,
       user: current_user,
-      permission_level: @invitation.role # roleカラムがないためpermission_levelを使用
+      permission_level: @invitation.role
     )
 
-    # 招待状を使用済みに更新 (user_idカラムがないためaccepted_atのみ)
+    # 招待状を使用済みに更新
     @invitation.update!(accepted_at: Time.current)
 
     redirect_to trip_path(trip), notice: t('messages.member.join_success', trip_title: trip.title)
   end
 
   # POST /invitations/:token/guest
-  def accept_guest    
+  def accept_guest
     if @invitation.valid_invitation?
       session[:guest_token] = @invitation.token
-      # ユーザーへの通知メッセージを出し分け
+      
       if @invitation.role == 'editor'
         flash[:notice] = 'ゲストとして閲覧します。（編集機能を利用するにはログインが必要です）'
       else
         flash[:notice] = t('messages.invitation.guest_join_success')
       end
+      
       redirect_to trip_path(@invitation.trip)
     else
       redirect_to root_path, alert: t('messages.invitation.link_invalid')
