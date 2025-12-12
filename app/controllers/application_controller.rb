@@ -15,9 +15,12 @@ class ApplicationController < ActionController::Base
   end
 
   # Deviseのサインアップ成功後のリダイレクト先を決定
-  def after_sign_up_path_for(resource)
-    # 招待トークンがあれば処理を実行、なければ Devise のデフォルト処理 (super) へ
-    handle_invitation_acceptance(resource) || super
+  def after_sign_in_path_for(resource)
+    # 招待トークンがあれば処理を実行
+    invitation_path = handle_invitation_acceptance(resource)
+    return invitation_path if invitation_path.present?
+
+    trips_path
   end
 
   protected
@@ -79,5 +82,5 @@ class ApplicationController < ActionController::Base
     # 権限がない場合、一つ前のページに戻す（なければルートパス）
     redirect_back(fallback_location: root_path)
   end
-  
+
 end

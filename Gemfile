@@ -16,17 +16,19 @@ gem 'stimulus-rails'
 gem 'turbo-rails'
 
 # -- Database/Security --
-gem 'bcrypt', '~> 3.1.7' # Active Model has_secure_password または Deviseで使用
+gem 'bcrypt', '~> 3.1.7' 
 gem 'bootsnap', require: false
 gem 'tzinfo-data', platforms: %i[windows jruby]
 
 # -- Application Features (Custom Gems) --
-gem 'devise', '~> 4.9'              # 認証機能 (ユーザー登録/ログイン)
-gem 'gemini-ai', '~> 4.3'           # AI連携 (旅程生成/タイトル命名)
-gem 'geocoder', '~> 1.8'            # 地図/位置情報 (移動時間計算の土台)
-gem 'rolify', '~> 6.0'              # 権限管理 (TripUserの権限レベル管理を支援)
+gem 'devise', '~> 4.9' 
+gem 'gemini-ai', '~> 4.3' 
+gem 'geocoder', '~> 1.8' 
+gem 'rolify', '~> 6.0' 
 
-# Gemfile
+# Punditは認証機能としてここに移動
+gem 'pundit'
+
 
 group :development, :test do
   gem 'debug', platforms: %i[mri windows]
@@ -36,6 +38,10 @@ group :development, :test do
   gem 'rubocop', require: false
   gem 'rubocop-performance', require: false
   gem 'rubocop-rails', require: false
+  
+  # 統合テスト/UIテスト関連
+  gem 'capybara', '~> 3.37'
+  gem 'selenium-webdriver' 
 end
 
 group :development do
@@ -43,10 +49,6 @@ group :development do
   gem 'web-console'
 end
 
-group :test do
-  gem 'capybara'
-  gem 'selenium-webdriver'
-end
 
 group :production do
   gem 'pg', '~> 1.0'
@@ -63,5 +65,3 @@ gem 'acts_as_list'
 gem 'dotenv-rails', groups: %i[development test]
 
 gem 'image_processing', '~> 1.14.0'
-
-gem 'pundit'
