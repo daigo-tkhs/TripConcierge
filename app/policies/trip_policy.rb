@@ -82,4 +82,9 @@ class TripPolicy < ApplicationPolicy
   def check_guest_access?
     false
   end
+
+  # ChecklistsController#import の権限チェック用
+  def import?
+    editor?
+  end
 end
