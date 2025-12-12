@@ -4,6 +4,9 @@ class ApplicationController < ActionController::Base
   before_action :basic_auth, unless: -> { Rails.env.test? }
   # Deviseコントローラーが動く時だけ、パラメータ設定メソッドを実行
   before_action :configure_permitted_parameters, if: :devise_controller?
+  
+  include Pundit::Authorization
+  rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
 
   # Deviseのサインイン成功後のリダイレクト先を決定
   def after_sign_in_path_for(resource)
@@ -53,7 +56,7 @@ class ApplicationController < ActionController::Base
         # 成功したらセッションをクリア
         session.delete(:invitation_token)
 
-        # ▼▼▼ 修正: Flashメッセージを直接設定し、リダイレクトパスのみを返す ▼▼▼
+        # Flashメッセージを直接設定し、リダイレクトパスのみを返す
         flash[:notice] = "#{invitation.trip.title} の招待を受け入れました！"
         return trip_path(invitation.trip)
       else
@@ -70,4 +73,11 @@ class ApplicationController < ActionController::Base
       username == ENV['BASIC_AUTH_USER'] && password == ENV['BASIC_AUTH_PASSWORD']
     end
   end
+  
+  def user_not_authorized
+    flash[:alert] = "この操作を行う権限がありません。"
+    # 権限がない場合、一つ前のページに戻す（なければルートパス）
+    redirect_back(fallback_location: root_path)
+  end
+  
 end
