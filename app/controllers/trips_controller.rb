@@ -1,4 +1,7 @@
 # frozen_string_literal: true
+require 'uri'
+require 'net/http'
+require 'json' 
 
 class TripsController < ApplicationController
   # ログインチェックは index と show を除外
@@ -17,9 +20,12 @@ class TripsController < ApplicationController
 
   def show
     # @trip に対して show? 権限があるかチェック。
-    # ゲストの場合は set_trip で既に旅程が特定されているため、ここでは主にログインユーザーの viewable? をチェック。
     authorize @trip
     @hide_header = true
+    
+    # スポットリレーションシップを強制的に再読み込み (キャッシュ対策)
+    @trip.spots.reload 
+    
     prepare_trip_show_data
   end
 
@@ -30,6 +36,9 @@ class TripsController < ApplicationController
 
   def edit
     authorize @trip
+    @hide_header = true
+    
+    # ★ 修正点: @message の初期化を削除。edit.html.erb にチャットフォームがない前提。
   end
 
   def create
@@ -122,12 +131,14 @@ class TripsController < ApplicationController
       0.0
     end
 
-    calculate_spot_totals
+    calculate_spot_totals # このメソッド内でサマリー変数を定義
 
+    # 日別内訳の travel, stay を修正
     @daily_stats = @spots.group_by(&:day_number).transform_values do |day_spots|
       {
         cost: day_spots.sum { |s| s.estimated_cost.to_i },
-        time: day_spots.sum { |s| s.travel_time.to_i }
+        travel: day_spots.sum { |s| s.travel_time.to_i },
+        stay: day_spots.sum { |s| s.duration.to_i } 
       }
     end
 
@@ -137,20 +148,22 @@ class TripsController < ApplicationController
     @invitation_link = token ? invitation_url(token) : nil
   end
 
+  # サマリーカードの合計値を正しく計算する
   def calculate_spot_totals
-    @total_travel_time_minutes = @spots.sum(:travel_time).to_i
-    @total_estimated_cost = @spots.sum(:estimated_cost).to_i 
+    @total_travel_mins = @spots.sum(:travel_time).to_i       
+    @total_duration_mins = @spots.sum(:duration).to_i         
+    @total_estimated_cost = @spots.sum(:estimated_cost).to_i  
+
+    # 総所要時間 (滞在時間 + 移動時間)
+    @grand_total_mins = @total_travel_mins + @total_duration_mins
   end
 
   def set_trip
     if user_signed_in?
-      # ログインユーザーの場合: 共有された旅程から検索
       @trip = Trip.shared_with_user(current_user).find(params[:id])
     elsif @guest_invitation
-      # ゲストの場合: 招待状に紐付く旅程を取得
       @trip = @guest_invitation.trip
     else
-      # どちらでもない場合: 単にIDで検索 (show アクションでのみ発生するはず)
       @trip = Trip.find(params[:id]) 
     end
   rescue ActiveRecord::RecordNotFound

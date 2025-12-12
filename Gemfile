@@ -65,3 +65,7 @@ gem 'acts_as_list'
 gem 'dotenv-rails', groups: %i[development test]
 
 gem 'image_processing', '~> 1.14.0'
+
+gem "stimulus-rails"
+
+gem "turbo-rails"

@@ -1,14 +1,11 @@
-# frozen_string_literal: true
+# config/initializers/assets.rb
 
-# Be sure to restart your server when you modify this file.
-
-# Version of your assets, change this if you want to expire all your assets.
 Rails.application.config.assets.version = '1.0'
 
-# Add additional assets to the asset load path.
-# Rails.application.config.assets.paths << Emoji.images_path
+# ▼▼▼ 修正版: Gemのアセットパスを読み込む（最も確実） ▼▼▼
+if defined?(Stimulus::Rails::Engine)
+  Rails.application.config.assets.paths << Stimulus::Rails::Engine.root.join('app', 'assets', 'javascripts')
+end
 
-# Precompile additional assets.
-# application.js, application.css, and all non-JS/CSS in the app/assets
-# folder are already added.
-# Rails.application.config.assets.precompile += %w( admin.js admin.css )
+# Tailwind CSS のアセットビルドパスも念のため再確認（ある場合）
+Rails.application.config.assets.paths << Rails.root.join('app', 'assets', 'builds')

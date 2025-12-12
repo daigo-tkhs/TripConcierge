@@ -7,24 +7,27 @@ class MessagesController < ApplicationController
   before_action :set_message, only: %i[edit update destroy]
 
   def index
-    # 権限チェック: TripPolicy#show? をチェック (閲覧権限)
-    authorize @trip
+    authorize @trip, :ai_chat?
     
     @hide_header = true
     @messages = @trip.messages.order(created_at: :asc)
     @message = Message.new
+    
+    respond_to do |format|
+      format.html
+      format.turbo_stream
+    end
   end
 
   def edit
-    # 権限チェック: MessagePolicy#edit? をチェック
     authorize @message
+    render 'edit'
   end
 
   def create
     @message = @trip.messages.build(message_params)
     @message.user = current_user
     
-    # 権限チェック: MessagePolicy#create? をチェック (編集権限)
     authorize @message
 
     if @message.save
@@ -35,7 +38,6 @@ class MessagesController < ApplicationController
   end
 
   def update
-    # 権限チェック: MessagePolicy#update? をチェック
     authorize @message
 
     @trip.messages.where('created_at > ?', @message.created_at).destroy_all
@@ -43,38 +45,83 @@ class MessagesController < ApplicationController
     if @message.update(message_params)
       generate_ai_response(@message)
     else
+      # エラー時も Turbo Stream で編集フォームを再表示
       render :edit, status: :unprocessable_content
     end
   end
 
+  # ... (destroy, generate_ai_response 以下のメソッドは変更なし、前回のまま) ...
   def destroy
-    # 権限チェック: MessagePolicy#destroy? をチェック (編集権限または作成者自身)
     authorize @message
     
     @message.destroy
     respond_to do |format|
-      format.html do
-        redirect_to trip_messages_path(@trip),
-                     notice: t('messages.user_message.delete_success'),
-                     status: :see_other
-      end
+      # Flashメッセージを flash.now で設定
+      flash.now[:notice] = t('messages.user_message.delete_success') 
+      
+      # HTMLリクエストの場合はリダイレクトを維持
+      format.html { redirect_to trip_messages_path(@trip), status: :see_other } 
+      
+      # Turbo Streamリクエストの場合は、専用ビューを使用
       format.turbo_stream
     end
   end
-
-  private
 
   def generate_ai_response(message_record)
     system_instruction, contents = build_request_content(message_record)
 
     raw_response = handle_ai_api_request(system_instruction, contents)
 
-    handle_ai_response(message_record, raw_response)
+    handle_ai_response_and_redirect(message_record, raw_response)
   rescue StandardError => e
     Rails.logger.error "Gemini API Error: #{e.message}"
     redirect_to trip_messages_path(@trip), alert: t('messages.ai.communication_error', error: e.message)
   end
 
+  private
+
+  def handle_ai_response_and_redirect(message_record, raw_response)
+    if raw_response && raw_response['candidates'].present?
+      candidates = raw_response['candidates']
+      ai_response = candidates[0].dig('content', 'parts', 0, 'text')
+
+      if ai_response.present?
+        message_record.update!(response: ai_response)
+        
+        @messages = @trip.messages.order(created_at: :asc)
+        @hide_header = true
+
+        respond_to do |format|
+          format.turbo_stream { render :index, status: :ok }
+          format.html { redirect_to trip_messages_path(@trip) }
+        end
+      else
+        redirect_to trip_messages_path(@trip), alert: t('messages.ai.response_text_not_found')
+      end
+    else
+      redirect_to trip_messages_path(@trip), alert: t('messages.ai.no_valid_response')
+    end
+  end
+  
+  def build_request_content(message_record)
+    system_instruction = helpers.build_system_instruction_for_ai
+    contents = build_conversation_contents(message_record)
+    [system_instruction, contents]
+  end
+
+  def build_conversation_contents(message_record)
+    past_messages = @trip.messages.order(created_at: :asc)
+    contents = []
+    past_messages.each do |msg|
+      if msg.created_at < message_record.created_at
+        contents << { role: 'user', parts: [{ text: msg.prompt }] }
+        contents << { role: 'model', parts: [{ text: msg.response }] } if msg.response.present?
+      end
+    end
+    contents << { role: 'user', parts: [{ text: message_record.prompt }] }
+    contents
+  end
+  
   def handle_ai_api_request(system_instruction, contents)
     client = Gemini.new(
       credentials: {
@@ -93,48 +140,6 @@ class MessagesController < ApplicationController
     result.is_a?(Array) ? result.first : result
   end
 
-  def build_request_content(message_record)
-    system_instruction = helpers.build_system_instruction_for_ai
-
-    # 会話履歴の構築ロジックを分離
-    contents = build_conversation_contents(message_record)
-    [system_instruction, contents]
-  end
-
-  # 会話履歴の構築ロジックを分離
-  def build_conversation_contents(message_record)
-    past_messages = @trip.messages.order(created_at: :asc)
-
-    contents = []
-    past_messages.each do |msg|
-      # 自身より古いメッセージだけを履歴に含める
-      if msg.created_at < message_record.created_at
-        contents << { role: 'user', parts: [{ text: msg.prompt }] }
-        contents << { role: 'model', parts: [{ text: msg.response }] } if msg.response.present?
-      end
-    end
-
-    contents << { role: 'user', parts: [{ text: message_record.prompt }] }
-
-    contents
-  end
-
-  def handle_ai_response(message_record, raw_response)
-    if raw_response && raw_response['candidates'].present?
-      candidates = raw_response['candidates']
-      ai_response = candidates[0].dig('content', 'parts', 0, 'text')
-
-      if ai_response.present?
-        message_record.update!(response: ai_response)
-        redirect_to trip_messages_path(@trip)
-      else
-        redirect_to trip_messages_path(@trip), alert: t('messages.ai.response_text_not_found')
-      end
-    else
-      redirect_to trip_messages_path(@trip), alert: t('messages.ai.no_valid_response')
-    end
-  end
-
   def set_trip
     @trip = Trip.find(params[:trip_id])
   rescue ActiveRecord::RecordNotFound
@@ -142,7 +147,6 @@ class MessagesController < ApplicationController
   end
 
   def set_message
-    # NOTE: 権限のないユーザーが他人のメッセージを編集/削除できないよう、Punditでチェック
     @message = @trip.messages.find(params[:id]) 
   rescue ActiveRecord::RecordNotFound
     redirect_to trip_messages_path(@trip), alert: t('messages.user_message.not_found')

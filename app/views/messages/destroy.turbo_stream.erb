@@ -1,1 +1,11 @@
-<%= turbo_stream.remove @message %>
+<%# app/views/messages/destroy.turbo_stream.erb %>
+
+<%# 1. 削除されたメッセージのDOM要素を画面から削除します %>
+<%= turbo_stream.remove dom_id(@message) %>
+
+<%# 2. フラッシュメッセージを画面上部のコンテナに追加します %>
+<%# (前提として、layouts/application.html.erb に id="flash_container" が必要です) %>
+<%= turbo_stream.append "flash_container" do %>
+  <%# flash[:notice]などを表示するための共通パーシャルをレンダリング %>
+  <%= render "shared/flash_messages" %>
+<% end %>

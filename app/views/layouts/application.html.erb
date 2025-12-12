@@ -22,17 +22,19 @@
       <%# ヘッダー %>
       <%= render 'shared/header' unless @hide_header %>
 
-      <%# フラッシュメッセージ %>
-      <% if notice %>
-        <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 m-4 rounded shadow-sm text-sm" role="alert">
-          <p><%= notice %></p>
-        </div>
-      <% end %>
-      <% if alert %>
-        <div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 m-4 rounded shadow-sm text-sm" role="alert">
-          <p><%= alert %></p>
-        </div>
-      <% end %>
+      <div id="flash_container">
+        <%# フラッシュメッセージ %>
+        <% if notice %>
+          <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 m-4 rounded shadow-sm text-sm" role="alert">
+            <p><%= notice %></p>
+          </div>
+        <% end %>
+        <% if alert %>
+          <div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 m-4 rounded shadow-sm text-sm" role="alert">
+            <p><%= alert %></p>
+          </div>
+        <% end %>
+      </div>
 
       <%# メインコンテンツ %>
       <main>

@@ -3,9 +3,9 @@ class TripPolicy < ApplicationPolicy
   class Scope < Scope
     def resolve
       scope.left_outer_joins(:trip_users)
-           .where(trips: { owner: user })
-           .or(scope.left_outer_joins(:trip_users).where(trip_users: { user: user }))
-           .distinct
+            .where(trips: { owner: user })
+            .or(scope.left_outer_joins(:trip_users).where(trip_users: { user: user }))
+            .distinct
     end
   end
   
@@ -76,6 +76,12 @@ class TripPolicy < ApplicationPolicy
     user.present?
   end
   
+  # ▼▼▼ 追加: AIチャットの利用権限 ▼▼▼
+  # 編集権限を持つユーザー（オーナーおよび編集者）はAIチャットを利用可能
+  def ai_chat?
+    editor?
+  end
+
   private
   
   # ゲストとしてアクセス可能かチェックするプライベートメソッド
