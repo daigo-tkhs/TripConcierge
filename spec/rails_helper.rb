@@ -20,6 +20,10 @@ end
 RSpec.configure do |config|
   config.include FactoryBot::Syntax::Methods
 
+  # ▼▼▼ 追加: Request SpecでDeviseのログイン機能(sign_in)を使えるようにする ▼▼▼
+  config.include Devise::Test::IntegrationHelpers, type: :request
+  # ▲▲▲ 追加終わり ▲▲▲
+
   # トランザクションを使ってテスト毎にデータをロールバックする（DBをクリーンに保つ）
   config.use_transactional_fixtures = true
 
