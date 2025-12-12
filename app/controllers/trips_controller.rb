@@ -1,37 +1,40 @@
 # frozen_string_literal: true
 
 class TripsController < ApplicationController
-  # ▼▼▼ 修正: showアクションの認証ルールを変更 ▼▼▼
-  # show以外は通常通りログイン必須
-  before_action :authenticate_user!, except: %i[show]
-  # showは「ログインユーザー」または「ゲスト」なら許可
-  before_action :authenticate_user_or_guest!, only: %i[show]
-  # ▲▲▲ 修正終わり ▲▲▲
-
+  # ログインチェックは index と show を除外
+  before_action :authenticate_user!, except: %i[index show]
+  
+  # show アクションでのみゲストトークンをチェックし、有効なら @guest_invitation を設定
+  before_action :check_guest_token_for_show, only: %i[show]
+  
   before_action :set_trip, only: %i[show edit update destroy sharing clone invite]
-  before_action :check_trip_owner, only: %i[edit update destroy]
-
   skip_before_action :basic_auth, only: [:index]
 
-  # --- Public Actions ---
 
   def index
-    @trips = Trip.shared_with_user(current_user).order(created_at: :desc)
+    @trips = policy_scope(Trip).order(created_at: :desc)
   end
 
   def show
+    # @trip に対して show? 権限があるかチェック。
+    # ゲストの場合は set_trip で既に旅程が特定されているため、ここでは主にログインユーザーの viewable? をチェック。
+    authorize @trip
     @hide_header = true
     prepare_trip_show_data
   end
 
   def new
     @trip = current_user.owned_trips.build
+    authorize @trip 
   end
 
-  def edit; end
+  def edit
+    authorize @trip
+  end
 
   def create
     @trip = current_user.owned_trips.build(trip_params)
+    authorize @trip
 
     if @trip.save
       redirect_to @trip, notice: t('messages.trip.create_success')
@@ -42,6 +45,8 @@ class TripsController < ApplicationController
   end
 
   def update
+    authorize @trip
+    
     if @trip.update(trip_params)
       redirect_to @trip, notice: t('messages.trip.update_success')
     else
@@ -51,21 +56,22 @@ class TripsController < ApplicationController
   end
 
   def destroy
-    if @trip.owner == current_user
-      @trip.destroy
-      redirect_to trips_path, notice: t('messages.trip.delete_success'), status: :see_other
-    else
-      redirect_to trip_path(@trip), alert: t('messages.trip.delete_permission_denied')
-    end
+    authorize @trip
+    
+    @trip.destroy
+    redirect_to trips_path, notice: t('messages.trip.delete_success'), status: :see_other
   end
 
   def sharing
+    authorize @trip
     @trip_users = @trip.trip_users.includes(:user).where.not(id: nil)
     @trip_user = @trip.trip_users.build
     @trip_invitation = @trip.trip_invitations.build
   end
 
   def invite
+    authorize @trip
+    
     @trip_invitation = @trip.trip_invitations.build(invitation_params)
     @trip_invitation.sender = current_user 
 
@@ -82,34 +88,30 @@ class TripsController < ApplicationController
   end
 
   def clone
+    authorize @trip
+    
     cloned_trip = @trip.clone_with_spots(current_user)
     redirect_to cloned_trip, notice: t('messages.trip.clone_success')
   end
 
-  # --- Private Methods ---
 
   private
+  
+  # ゲストトークンをチェックし、有効なら @guest_invitation を設定する
+  def check_guest_token_for_show
+    # 未ログイン時のみ処理
+    return if user_signed_in? || session[:guest_token].blank?
 
-  # ▼▼▼ 追加: ゲストアクセス許可ロジック ▼▼▼
-  def authenticate_user_or_guest!
-    # ログイン済みならOK
-    return if user_signed_in?
-
-    # セッションにゲストトークンがあり、それが有効ならOK
-    if session[:guest_token]
-      invitation = TripInvitation.find_by(token: session[:guest_token])
-      # 招待状が存在し、有効期限内であり、アクセスしようとしている旅程と一致するか
-      if invitation&.valid_invitation? && invitation.trip_id.to_s == params[:id].to_s
-        @guest_invitation = invitation # set_tripで使用するために保存
-        return
-      end
+    invitation = TripInvitation.find_by(token: session[:guest_token])
+    
+    # 招待状が存在し、有効期限内であり、アクセスしようとしている旅程と一致するか
+    if invitation&.valid_invitation? && invitation.trip_id.to_s == params[:id].to_s
+      @guest_invitation = invitation
+    else
+      session.delete(:guest_token) # 無効なら削除
     end
-
-    # どちらもダメならログイン画面へ強制遷移
-    authenticate_user!
   end
-  # ▲▲▲ 追加終わり ▲▲▲
-
+  
   def prepare_trip_show_data
     @spots = @trip.spots.order(:position)
 
@@ -148,19 +150,13 @@ class TripsController < ApplicationController
       # ゲストの場合: 招待状に紐付く旅程を取得
       @trip = @guest_invitation.trip
     else
-      # ここに来ることは基本ないが、念のため
-      redirect_to root_path, alert: t('messages.trip.not_found')
+      # どちらでもない場合: 単にIDで検索 (show アクションでのみ発生するはず)
+      @trip = Trip.find(params[:id]) 
     end
   rescue ActiveRecord::RecordNotFound
     redirect_to root_path, alert: t('messages.trip.not_found')
   end
-
-  def check_trip_owner
-    return if @trip.owner == current_user
-
-    redirect_to trip_path(@trip), alert: t('messages.trip.delete_permission_denied')
-  end
-
+  
   def trip_params
     params.require(:trip).permit(:title, :start_date, :end_date, :total_budget, :travel_theme)
   end
