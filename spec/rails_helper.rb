@@ -7,7 +7,7 @@ require_relative '../config/environment'
 abort("The Rails environment is running in production mode!") if Rails.env.production?
 require 'rspec/rails'
 
-# spec/support 以下のファイルを読み込む設定（必要になったらコメントアウトを外す）
+# spec/support 以下のファイルを読み込む設定を有効化
 Rails.root.glob('spec/support/**/*.rb').sort_by(&:to_s).each { |f| require f }
 
 # 待機中のマイグレーションがないかチェック
@@ -20,9 +20,10 @@ end
 RSpec.configure do |config|
   config.include FactoryBot::Syntax::Methods
 
-  # ▼▼▼ 追加: Request SpecでDeviseのログイン機能(sign_in)を使えるようにする ▼▼▼
+  # Deviseのログイン機能(sign_in)をテストタイプに応じて含める
   config.include Devise::Test::IntegrationHelpers, type: :request
-  # ▲▲▲ 追加終わり ▲▲▲
+  # ▼▼▼ Feature Spec で sign_in を使用可能にするために追加 ▼▼▼
+  config.include Devise::Test::IntegrationHelpers, type: :feature
 
   # トランザクションを使ってテスト毎にデータをロールバックする（DBをクリーンに保つ）
   config.use_transactional_fixtures = true
