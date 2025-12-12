@@ -6,6 +6,7 @@ class MessagesController < ApplicationController
   before_action :authenticate_user!
   before_action :set_trip
   before_action :set_message, only: %i[edit update destroy]
+  before_action :check_trip_edit_permission, only: %i[create destroy]
 
   def index
     @hide_header = true
@@ -135,5 +136,11 @@ class MessagesController < ApplicationController
 
   def message_params
     params.require(:message).permit(:prompt)
+  end
+
+  def check_trip_edit_permission
+    unless @trip.editable_by?(current_user)
+      redirect_to trip_path(@trip), alert: "メッセージを作成/削除する権限がありません。"
+    end
   end
 end
