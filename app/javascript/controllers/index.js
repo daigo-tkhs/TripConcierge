@@ -13,12 +13,11 @@ import { application } from "controllers/application"
 import GeocodingController from "./geocoding_controller" 
 application.register("geocoding", GeocodingController)
 
-// ★必要に応じて、その他の既存コントローラーもここに手動で追加してください★
-// 例:
-// import MapController from "./map_controller" 
-// application.register("map", MapController) 
+// map_controller を登録
+import MapController from "./map_controller" 
+application.register("map", MapController) 
 
-// import HelloController from "./hello_controller"
-// application.register("hello", HelloController)
-
+// sortable_controller を登録
+import SortableController from "./sortable_controller"
+application.register("sortable", SortableController)
 // ----------------------

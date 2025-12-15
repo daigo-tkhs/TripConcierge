@@ -1,3 +1,5 @@
+// app/javascript/controllers/sortable_controller.js
+
 import { Controller } from "@hotwired/stimulus"
 import Sortable from "sortablejs"
 
@@ -17,7 +19,6 @@ export default class extends Controller {
     const id = event.item.dataset.id
     const newIndex = event.newIndex + 1
     const newDayNumber = event.to.dataset.dayNumber
-    console.log("Moved to Day:", newDayNumber); 
 
     fetch(this.urlValue.replace(":id", id), {
       method: "PATCH",
@@ -27,7 +28,7 @@ export default class extends Controller {
       },
       body: JSON.stringify({ 
         position: newIndex,
-        day_number: newDayNumber // ここで送る
+        day_number: newDayNumber
       })
     })
   }
