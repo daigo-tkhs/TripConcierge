@@ -1,66 +1,55 @@
 # frozen_string_literal: true
 require 'uri'
 require 'net/http'
-require 'json' # API応答をパースするために使用
+require 'json' 
 
 class SpotsController < ApplicationController
   before_action :authenticate_user!
   before_action :set_trip
   before_action :set_spot, only: %i[show edit update destroy move]
 
-  # GET /trips/:trip_id/spots/1
   def show
     authorize @spot
   end
 
-  # GET /trips/:trip_id/spots/new
   def new
-    # スポット追加画面ではヘッダーを非表示
     @hide_header = true
     @spot = @trip.spots.build
     authorize @spot
   end
 
-  # GET /trips/:trip_id/spots/1/edit
   def edit
     authorize @spot
   end
 
-  # POST /trips/:trip_id/spots
   def create
     source_param = params[:spot][:source] if params[:spot].present?
     @spot = @trip.spots.build(spot_params)
     authorize @spot
 
-    # リダイレクト先を決定: source パラメータが 'chat' から送られてきた場合にのみチャット画面に戻る
-    # ★★★ このロジックは既に正しいです ★★★
-    redirect_destination = if params[:spot][:source] == 'chat'
+    redirect_destination = if source_param == 'chat'
                            trip_messages_path(@trip)
                          else
-                           # 通常のスポット追加フォームからの場合は、詳細画面に戻る
                            @trip 
                          end
                          
     if @spot.save
-      # スポット保存後に移動時間計算を呼び出す
       calculate_and_update_travel_time(@spot)
       
       flash[:notice] = "「#{@spot.name}」を旅程のDay #{@spot.day_number}に追加しました。"
-      
-      # ★★★ 修正箇所: 不要な if/else を削除し、定義された変数に直接リダイレクトする ★★★
       redirect_to redirect_destination
     else
-      # 失敗した場合も、リダイレクト先に戻す
       flash[:alert] = "スポットの追加に失敗しました: #{@spot.errors.full_messages.join(', ')}"
       redirect_to redirect_destination
     end
   end
 
-  # PATCH/PUT /trips/:trip_id/spots/1
   def update
     authorize @spot
     
     if @spot.update(spot_params)
+      recalculate_all_travel_times_for_day(@spot.day_number) 
+      
       redirect_to @trip, notice: t('messages.spot.update_success')
     else
       flash.now[:alert] = t('messages.spot.update_failure')
@@ -68,11 +57,14 @@ class SpotsController < ApplicationController
     end
   end
 
-  # DELETE /trips/:trip_id/spots/1
   def destroy
     authorize @spot
     
+    day_to_recalculate = @spot.day_number
     @spot.destroy!
+    
+    recalculate_all_travel_times_for_day(day_to_recalculate)
+    
     redirect_to @trip, notice: t('messages.spot.delete_success'), status: :see_other
   end
   
@@ -80,7 +72,20 @@ class SpotsController < ApplicationController
   def move
     authorize @spot
     
-    @spot.insert_at(params[:position].to_i)
+    new_day_number = params[:day_number].to_i
+    new_position = params[:position].to_i
+
+    old_day_number = @spot.day_number
+
+    @spot.day_number = new_day_number
+    @spot.insert_at(new_position)
+
+    recalculate_all_travel_times_for_day(new_day_number)
+    
+    if old_day_number != new_day_number
+      recalculate_all_travel_times_for_day(old_day_number)
+    end
+
     head :ok
   end
 
@@ -112,9 +117,9 @@ class SpotsController < ApplicationController
       )
     end
     
-    # ★ 移動時間計算と保存のためのプライベートメソッド (変更なし) ★
+    # スポット追加時用の移動時間計算
     def calculate_and_update_travel_time(new_spot)
-      previous_spot = @trip.spots.order(:position).where('position < ?', new_spot.position).last
+      previous_spot = @trip.spots.order(:position).where(day_number: new_spot.day_number).where('position < ?', new_spot.position).last
       
       if previous_spot.present? && 
          new_spot.latitude.present? && new_spot.longitude.present? && 
@@ -156,6 +161,62 @@ class SpotsController < ApplicationController
           
         rescue => e
           Rails.logger.error "Google Maps API/Network Error: #{e.message}"
+        end
+      end
+    end
+    
+    # 指定された日の全ての移動時間を再計算するメソッド (スポット移動/更新/削除時用)
+    def recalculate_all_travel_times_for_day(day_number)
+      spots_on_day = @trip.spots.where(day_number: day_number).order(:position)
+      
+      return unless spots_on_day.present?
+
+      # 最初のスポットの travel_time はクリア
+      spots_on_day.first.update!(travel_time: nil)
+      
+      # 2番目のスポットから最後までループ (index は 1 から始まる)
+      spots_on_day.each_with_index do |current_spot, index|
+        next if index == 0
+
+        previous_spot = spots_on_day[index - 1]
+        
+        if previous_spot.latitude.present? && previous_spot.longitude.present? && 
+           current_spot.latitude.present? && current_spot.longitude.present?
+          
+          begin
+            api_key = Rails.application.credentials.google_maps[:api_key]
+            
+            origin      = "#{previous_spot.latitude},#{previous_spot.longitude}"
+            destination = "#{current_spot.latitude},#{current_spot.longitude}"
+            
+            base_url = "https://maps.googleapis.com/maps/api/directions/json"
+            
+            params = {
+              origin: origin,
+              destination: destination,
+              key: api_key,
+              mode: 'driving'
+            }
+
+            uri = URI(base_url)
+            uri.query = URI.encode_www_form(params)
+
+            response = Net::HTTP.get_response(uri)
+            data = JSON.parse(response.body)
+
+            if data['status'] == 'OK' && data['routes'].present?
+              duration_in_seconds = data['routes'][0]['legs'][0]['duration']['value'].to_i
+              travel_time_in_minutes = (duration_in_seconds / 60.0).round.to_i 
+              
+              previous_spot.update!(travel_time: travel_time_in_minutes)
+            end
+            
+          rescue => e
+            Rails.logger.error "Google Maps API/Network Error during re-sort: #{e.message}"
+            previous_spot.update!(travel_time: nil)
+          end
+        else
+          previous_spot.update!(travel_time: nil)
         end
       end
     end

@@ -1,27 +1,27 @@
 # frozen_string_literal: true
 
 class ApplicationController < ActionController::Base
+  # Rails.env.test? 以外で Basic認証を適用
   before_action :basic_auth, unless: -> { Rails.env.test? }
+  
   # Deviseコントローラーが動く時だけ、パラメータ設定メソッドを実行
   before_action :configure_permitted_parameters, if: :devise_controller?
   
   include Pundit::Authorization
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
 
+  # ★★★ 修正箇所: after_sign_in_path_for を統一する ★★★
   # Deviseのサインイン成功後のリダイレクト先を決定
-  def after_sign_in_path_for(resource)
-    # 招待トークンがあれば処理を実行、なければ Devise のデフォルト処理 (super) へ
-    handle_invitation_acceptance(resource) || super
-  end
-
-  # Deviseのサインアップ成功後のリダイレクト先を決定
   def after_sign_in_path_for(resource)
     # 招待トークンがあれば処理を実行
     invitation_path = handle_invitation_acceptance(resource)
     return invitation_path if invitation_path.present?
 
+    # 招待がない場合は、デフォルトの旅程一覧へ
     trips_path
   end
+  # ★★★ 修正箇所終了 ★★★
+
 
   protected
 
@@ -52,6 +52,7 @@ class ApplicationController < ActionController::Base
         invitation.update(accepted_at: Time.current)
 
         # TripUserを作成（参加処理）
+        # find_or_create_by を利用して重複作成を防止
         invitation.trip.trip_users.find_or_create_by(user: user) do |trip_user|
           trip_user.permission_level = invitation.role # 権限を招待状から引き継ぐ
         end
@@ -82,5 +83,4 @@ class ApplicationController < ActionController::Base
     # 権限がない場合、一つ前のページに戻す（なければルートパス）
     redirect_back(fallback_location: root_path)
   end
-
 end
