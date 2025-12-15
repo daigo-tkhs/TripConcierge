@@ -30,6 +30,17 @@ export default class extends Controller {
         position: newIndex,
         day_number: newDayNumber
       })
+    }) 
+    .then(response => {
+      // サーバー応答後に強制リロード
+      if (response.ok) {
+        window.location.reload()
+      } else {
+        console.error('スポットの並び替えに失敗しました。');
+      }
     })
+    .catch(error => {
+      console.error('通信エラー:', error);
+    });
   }
 }

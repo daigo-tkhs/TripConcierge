@@ -77,9 +77,15 @@ class SpotsController < ApplicationController
 
     old_day_number = @spot.day_number
 
-    @spot.day_number = new_day_number
+    # Dayをまたぐ移動の場合、先に day_number を保存する
+    if @spot.day_number != new_day_number
+      @spot.update!(day_number: new_day_number) 
+    end
+
+    # position を変更
     @spot.insert_at(new_position)
 
+    # 移動時間再計算ロジック
     recalculate_all_travel_times_for_day(new_day_number)
     
     if old_day_number != new_day_number
@@ -171,7 +177,7 @@ class SpotsController < ApplicationController
       
       return unless spots_on_day.present?
 
-      # 最初のスポットの travel_time はクリア
+      # 最初のスポットの travel_time はクリア (最初のスポットには前の移動がないため)
       spots_on_day.first.update!(travel_time: nil)
       
       # 2番目のスポットから最後までループ (index は 1 から始まる)
@@ -218,6 +224,12 @@ class SpotsController < ApplicationController
         else
           previous_spot.update!(travel_time: nil)
         end
+      end
+      
+      last_spot_on_day = spots_on_day.last
+      # travel_time は次のスポットへの移動時間のため、最後のスポットは必ず nil にする
+      if last_spot_on_day.travel_time.present?
+        last_spot_on_day.update!(travel_time: nil)
       end
     end
 end
