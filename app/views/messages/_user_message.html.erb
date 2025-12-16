@@ -1,0 +1,26 @@
+<%# app/views/messages/_user_message.html.erb %>
+<%# ローカル変数: message %>
+
+<%= turbo_frame_tag dom_id(message) do %>
+  <div class="flex justify-end mb-2">
+    <div class="flex flex-col items-end max-w-[80%]">
+      <div class="bg-blue-600 text-white p-3 rounded-2xl rounded-tr-none shadow-md text-sm leading-relaxed">
+        <%= simple_format(message.prompt, class: "mb-0") %>
+      </div>
+      
+      <%# 編集・削除リンク %>
+      <% if message.user_id == current_user.id %>
+        <div class="flex gap-3 mt-1 mr-1 text-[10px] text-gray-400">
+          <%# link_to のルーティングを message.trip を使って修正 %>
+          <%= link_to "編集", edit_trip_message_path(message.trip, message), 
+            class: "hover:text-blue-600 transition flex items-center gap-0.5",
+            data: { turbo_frame: dom_id(message) } %>
+          <%= button_to '削除', trip_message_path(message.trip, message), 
+            method: :delete, 
+            data: { turbo: false, turbo_confirm: '本当に削除しますか？' },
+            class: 'text-red-500 bg-transparent border-0 cursor-pointer' %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% end %>

@@ -1,0 +1,22 @@
+<%# app/views/shared/_flash_messages.html.erb %>
+<%# アプリケーション全体の通知を表示するためのパーシャル %>
+
+<% flash.each do |type, message| %>
+  <% if message.present? %>
+    <% css_class = case type.to_sym
+                   when :notice then "bg-green-100 border-green-400 text-green-700"
+                   when :alert, :error then "bg-red-100 border-red-400 text-red-700"
+                   else "bg-gray-100 border-gray-400 text-gray-700"
+                   end %>
+    
+    <%# data-controller="flash" は、Tailwind CSSで閉じるボタンを機能させるためのStimulusコントローラーが必要です %>
+    <div class="p-3 border-l-4 rounded-lg shadow-sm mb-3 <%= css_class %>" role="alert" data-controller="flash" data-flash-target="container">
+      <p class="font-medium text-sm"><%= message %></p>
+      <button type="button" class="absolute top-0 bottom-0 right-0 px-4 py-3 text-current" data-action="click->flash#close">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+  <% end %>
+<% end %>

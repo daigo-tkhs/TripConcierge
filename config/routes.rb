@@ -10,7 +10,7 @@ Rails.application.routes.draw do
   resources :trips do
     # --- 旅程にネストする機能 ---
 
-    resources :messages, only: %i[index create edit update destroy]
+    resources :messages, only: %i[index show create edit update destroy]
 
     resources :spots, only: %i[new create edit update destroy] do
       member do

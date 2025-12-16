@@ -1,0 +1,17 @@
+<%# app/views/messages/update.turbo_stream.erb %>
+
+<%# 1. 編集したユーザー自身のメッセージを更新 %>
+<%= turbo_stream.replace dom_id(@message), partial: "messages/user_message", locals: { message: @message } %>
+
+<%# 2. 古いAI返答を画面から削除 (コントローラーで取得したIDを使用) %>
+<% @deleted_message_ids.each do |id| %>
+  <%= turbo_stream.remove "message_#{id}" %>
+<% end %>
+
+<%# 3. 新しいAI返答があれば、リストの最後に追加 %>
+<% if @ai_message.present? %>
+  <%= turbo_stream.append "messages-container", partial: "messages/ai_message", locals: { message: @ai_message } %>
+<% end %>
+
+<%# 4. スクロール調整 %>
+<%= turbo_stream.append "scroll-anchor", "<span data-scroll-to></span>" %>

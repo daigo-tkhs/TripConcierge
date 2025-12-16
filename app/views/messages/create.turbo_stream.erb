@@ -1,0 +1,17 @@
+<%# app/views/messages/create.turbo_stream.erb %>
+
+<%# 1. ユーザーメッセージをリストに追加 %>
+<%= turbo_stream.append "messages-container", partial: "messages/user_message", locals: { message: @message } %>
+
+<%# 2. AI応答メッセージをリストに追加 %>
+<% if @ai_message.present? %>
+  <%= turbo_stream.append "messages-container", partial: "messages/ai_message", locals: { message: @ai_message } %>
+<% end %>
+
+<%# 3. フォームのリセット (テキストボックスクリア) %>
+<%= turbo_stream.replace "new_message_form" do %>
+  <%= render partial: "messages/form", locals: { trip: @message.trip, message: Message.new } %>
+<% end %>
+
+<%# 4. スクロールを最下部に移動 %>
+<%= turbo_stream.append "scroll-anchor", "<span data-scroll-to></span>" %>

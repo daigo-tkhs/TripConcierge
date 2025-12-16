@@ -23,21 +23,29 @@ class SpotsController < ApplicationController
   end
 
   def create
-    source_param = params[:spot][:source] if params[:spot].present?
+    # sourceパラメータは spot_params に含めず、ここで直接取得
+    is_from_chat = params[:spot][:source] == 'chat'
+
     @spot = @trip.spots.build(spot_params)
     authorize @spot
 
-    redirect_destination = if source_param == 'chat'
-                           trip_messages_path(@trip)
-                         else
-                           @trip 
-                         end
-                         
+    # リダイレクト先を設定
+    redirect_destination = is_from_chat ? trip_messages_path(@trip) : @trip 
+                             
     if @spot.save
       calculate_and_update_travel_time(@spot)
       
       flash[:notice] = "「#{@spot.name}」を旅程のDay #{@spot.day_number}に追加しました。"
-      redirect_to redirect_destination
+      
+      if is_from_chat
+        # ★修正: チャットからの場合は Turbo Stream でレスポンス（create.turbo_stream.erb を使用）
+        respond_to do |format|
+          format.turbo_stream
+          format.html { redirect_to redirect_destination }
+        end
+      else
+        redirect_to @trip
+      end
     else
       flash[:alert] = "スポットの追加に失敗しました: #{@spot.errors.full_messages.join(', ')}"
       redirect_to redirect_destination
@@ -108,6 +116,7 @@ class SpotsController < ApplicationController
     end
 
     def spot_params
+      # :source を削除済み
       params.require(:spot).permit(
         :name, 
         :description, 
@@ -120,6 +129,7 @@ class SpotsController < ApplicationController
         :position, 
         :latitude,  
         :longitude,
+        :reservation_required
       )
     end
     
@@ -171,16 +181,14 @@ class SpotsController < ApplicationController
       end
     end
     
-    # 指定された日の全ての移動時間を再計算するメソッド (スポット移動/更新/削除時用)
+    # 指定された日の全ての移動時間を再計算するメソッド
     def recalculate_all_travel_times_for_day(day_number)
       spots_on_day = @trip.spots.where(day_number: day_number).order(:position)
       
       return unless spots_on_day.present?
 
-      # 最初のスポットの travel_time はクリア (最初のスポットには前の移動がないため)
       spots_on_day.first.update!(travel_time: nil)
       
-      # 2番目のスポットから最後までループ (index は 1 から始まる)
       spots_on_day.each_with_index do |current_spot, index|
         next if index == 0
 
@@ -227,7 +235,6 @@ class SpotsController < ApplicationController
       end
       
       last_spot_on_day = spots_on_day.last
-      # travel_time は次のスポットへの移動時間のため、最後のスポットは必ず nil にする
       if last_spot_on_day.travel_time.present?
         last_spot_on_day.update!(travel_time: nil)
       end
