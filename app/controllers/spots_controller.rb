@@ -53,14 +53,36 @@ class SpotsController < ApplicationController
       redirect_to redirect_destination
     end
   end
-
+  
   def update
     authorize @spot
     
     if @spot.update(spot_params)
       recalculate_all_travel_times_for_day(@spot.day_number) 
       
-      redirect_to @trip, notice: t('messages.spot.update_success')
+      respond_to do |format|
+        format.html { redirect_to @trip, notice: t('messages.spot.update_success') }
+        format.turbo_stream do
+          @spots_by_day = @trip.spots.order(day_number: :asc, position: :asc).group_by(&:day_number)
+          
+          # 1. フラッシュメッセージを表示（オプション: 必要なら）
+          flash.now[:notice] = t('messages.spot.update_success')
+          
+          # 2. スケジュール部分を再描画
+          render turbo_stream: [
+            turbo_stream.replace(
+              "trip_schedule_frame", 
+              partial: "trips/schedule", 
+              locals: { 
+                trip: @trip, 
+                spots_by_day: @spots_by_day 
+              }
+            ),
+            # 3. (オプション) ページ上部にフラッシュメッセージを挿入/更新する場合のストリームを追加可能
+            # turbo_stream.update("flash_messages", partial: "shared/flash") 
+          ]
+        end
+      end
     else
       flash.now[:alert] = t('messages.spot.update_failure')
       render :edit, status: :unprocessable_content
@@ -107,10 +129,8 @@ class SpotsController < ApplicationController
     respond_to do |format|
       format.html { redirect_to @trip }
       format.turbo_stream do
-        # _schedule.html.erb に合わせるため、spots_by_day という名前でローカル変数を設定
         @spots_by_day = @trip.spots.order(day_number: :asc, position: :asc).group_by(&:day_number)
         
-        # trip_schedule_frame の中のコンテンツを _schedule で置き換える
         render turbo_stream: turbo_stream.replace(
           "trip_schedule_frame", 
           partial: "trips/schedule", 
@@ -136,7 +156,6 @@ class SpotsController < ApplicationController
     end
 
     def spot_params
-      # :source を削除済み
       params.require(:spot).permit(
         :name, 
         :description, 
@@ -152,13 +171,11 @@ class SpotsController < ApplicationController
         :reservation_required
       ).tap do |whitelisted|
         if whitelisted[:estimated_cost].present?
-          # 文字列から数字以外の文字（カンマ、記号など）をすべて取り除き、整数に変換
           whitelisted[:estimated_cost] = whitelisted[:estimated_cost].gsub(/[^0-9]/, '').to_i
         end
       end
     end
     
-    # スポット追加時用の移動時間計算
     def calculate_and_update_travel_time(new_spot)
       previous_spot = @trip.spots.order(:position).where(day_number: new_spot.day_number).where('position < ?', new_spot.position).last
       
@@ -167,9 +184,7 @@ class SpotsController < ApplicationController
           previous_spot.latitude.present? && previous_spot.longitude.present?
         
         begin
-          # 環境変数からキーを取得
           api_key = ENV['GOOGLE_MAPS_API_KEY'] || ENV['Maps_API_KEY']
-          
           return unless api_key.present?
           
           origin      = "#{previous_spot.latitude},#{previous_spot.longitude}"
@@ -189,12 +204,6 @@ class SpotsController < ApplicationController
 
           response = Net::HTTP.get_response(uri)
           data = JSON.parse(response.body)
-          
-          # ログ追加: APIステータスを確認
-          Rails.logger.info "--- API Response Status (Create): #{data['status']} ---"
-          if data['error_message'].present?
-            Rails.logger.error "--- API Error Message (Create): #{data['error_message']} ---"
-          end
 
           travel_time_in_minutes = nil
           
@@ -202,11 +211,10 @@ class SpotsController < ApplicationController
             duration_in_seconds = data['routes'][0]['legs'][0]['duration']['value'].to_i
             travel_time_in_minutes = (duration_in_seconds / 60.0).round.to_i 
           elsif data['error_message'].present?
-            Rails.logger.error "Google Maps API Error (Status: #{data['status']}): #{data['error_message']}"
+            Rails.logger.error "Google Maps API Error: #{data['error_message']}"
           end
 
           if travel_time_in_minutes.present?
-            # ★変更点: バリデーションをスキップして更新
             previous_spot.update_columns(travel_time: travel_time_in_minutes, updated_at: Time.current)
           end
           
@@ -216,13 +224,11 @@ class SpotsController < ApplicationController
       end
     end
     
-    # 指定された日の全ての移動時間を再計算するメソッド
     def recalculate_all_travel_times_for_day(day_number)
       spots_on_day = @trip.spots.where(day_number: day_number).order(:position)
       
       return unless spots_on_day.present?
 
-      # ★変更点: バリデーションをスキップして更新
       spots_on_day.first.update_columns(travel_time: nil, updated_at: Time.current)
       
       spots_on_day.each_with_index do |current_spot, index|
@@ -236,9 +242,8 @@ class SpotsController < ApplicationController
           begin
             api_key = ENV['GOOGLE_MAPS_API_KEY'] || ENV['Maps_API_KEY']
             
-            # ログ追加: APIキーの読み込みチェック
+            # APIキーログ（必要なければ削除可）
             Rails.logger.info "--- API Key Status: #{api_key.present? ? 'Loaded' : 'Missing'} ---"
-            
             return unless api_key.present?
             
             origin      = "#{previous_spot.latitude},#{previous_spot.longitude}"
@@ -259,35 +264,30 @@ class SpotsController < ApplicationController
             response = Net::HTTP.get_response(uri)
             data = JSON.parse(response.body)
 
-            # ▼▼▼ ログ追加: APIステータスを確認 ▼▼▼
+            # APIステータスログ（必要なければ削除可）
             Rails.logger.info "--- API Response Status: #{data['status']} ---"
             if data['error_message'].present?
               Rails.logger.error "--- API Error Message: #{data['error_message']} ---"
             end
-            # ▲▲▲ ログ追加ここまで ▲▲▲
 
             if data['status'] == 'OK' && data['routes'].present?
               duration_in_seconds = data['routes'][0]['legs'][0]['duration']['value'].to_i
               travel_time_in_minutes = (duration_in_seconds / 60.0).round.to_i 
               
-              # ★変更点: バリデーションをスキップして更新
               previous_spot.update_columns(travel_time: travel_time_in_minutes, updated_at: Time.current)
             end
             
           rescue => e
             Rails.logger.error "Google Maps API/Network Error during re-sort: #{e.message}"
-            # ★変更点: バリデーションをスキップして更新
             previous_spot.update_columns(travel_time: nil, updated_at: Time.current)
           end
         else
-          # ★変更点: バリデーションをスキップして更新
           previous_spot.update_columns(travel_time: nil, updated_at: Time.current)
         end
       end
       
       last_spot_on_day = spots_on_day.last
       if last_spot_on_day.travel_time.present?
-        # ★変更点: バリデーションをスキップして更新
         last_spot_on_day.update_columns(travel_time: nil, updated_at: Time.current)
       end
     end
