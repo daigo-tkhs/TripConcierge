@@ -11,8 +11,3 @@ pin_all_from "app/javascript/controllers", under: "controllers"
 pin "sortablejs" 
 pin "@rails/actioncable/src", to: "@rails--actioncable--src.js"
 pin "debounce"
-
-# ▼▼▼ 強制的に読み込ませるための明示的な指定 ▼▼▼
-pin "controllers/map_controller", to: "controllers/map_controller.js"
-pin "controllers/sortable_controller", to: "controllers/sortable_controller.js"
-pin "controllers/geocoding_controller", to: "controllers/geocoding_controller.js"
