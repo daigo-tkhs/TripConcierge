@@ -9,3 +9,6 @@ end
 
 # Tailwind CSS のアセットビルドパスも念のため再確認（ある場合）
 Rails.application.config.assets.paths << Rails.root.join('app', 'assets', 'builds')
+
+Rails.application.config.assets.paths << Rails.root.join("app/javascript")
+Rails.application.config.assets.precompile += %w( controllers/*.js )
