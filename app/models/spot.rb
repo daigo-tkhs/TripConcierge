@@ -30,9 +30,6 @@ class Spot < ApplicationRecord
     previous_spot = higher_item # acts_as_list の提供する「一つ前の要素を取得する」メソッド
     return unless previous_spot&.geocoded? && geocoded?
 
-    # 以前と同じ計算ロジック（TravelTimeService等があればそれを使用）
-    # コントローラー側の計算ロジックと重複する場合は注意が必要ですが、
-    # 基本的にはバックグラウンドまたは保存時に計算する方針でOKです
     begin
       self.travel_time = TravelTimeService.new.calculate_time(previous_spot, self)
     rescue => e

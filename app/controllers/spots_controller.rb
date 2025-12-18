@@ -82,17 +82,15 @@ class SpotsController < ApplicationController
   
   def move
     authorize @spot
-    # 1. 0が送られてきても最低「1」になるように調整
+    
+    new_pos = params[:spot][:position].to_i + 1
     new_day = params[:spot][:day_number].to_i
-    requested_pos = params[:spot][:position].to_i
-    new_pos = requested_pos < 1 ? 1 : requested_pos 
     
     old_day = @spot.day_number
 
-    # 2. トランザクションで囲む（データの整合性を守るため）
     ActiveRecord::Base.transaction do
       if @spot.day_number != new_day
-        @spot.update!(day_number: new_day) # !をつけて失敗に気づけるように
+        @spot.update!(day_number: new_day)
       end
       @spot.insert_at(new_pos)
     end
