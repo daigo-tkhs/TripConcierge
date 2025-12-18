@@ -144,7 +144,6 @@
   </div>
 
   <%# --- 4. AIチャットボタン (FAB) --- %>
-  <%# 配置コンテナを index.html.erb と統一 (max-w-md md:max-w-4xl lg:max-w-6xl xl:max-w-7xl) %>
   <% if @trip %>
     <div class="fixed bottom-24 left-0 w-full z-30 pointer-events-none">
       <div class="w-full max-w-md md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto relative px-4">
@@ -165,5 +164,8 @@
       </div>
     </div>
   <% end %>
+
+  <%# --- Google Maps API スクリプト (async属性を追加) --- %>
+  <script src="https://maps.googleapis.com/maps/api/js?key=<%= ENV['GOOGLE_MAPS_API_KEY'] || ENV['Maps_API_KEY'] %>&callback=mapControllerInit" async></script>
 
 </div>

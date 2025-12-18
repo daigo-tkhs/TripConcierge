@@ -16,6 +16,10 @@ class SpotsController < ApplicationController
     @hide_header = true
     @spot = @trip.spots.build
     authorize @spot
+    
+    respond_to do |format|
+      format.html # 必ずHTMLを返すように指定
+    end
   end
 
   def edit
