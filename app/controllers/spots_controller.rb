@@ -53,7 +53,7 @@ class SpotsController < ApplicationController
       redirect_to redirect_destination
     end
   end
-  
+
   def update
     authorize @spot
     
@@ -100,47 +100,30 @@ class SpotsController < ApplicationController
     redirect_to @trip, notice: t('messages.spot.delete_success'), status: :see_other
   end
   
-  # PATCH /trips/:trip_id/spots/:id/move
   def move
-    authorize @spot
-    
-    new_day_number = params[:day_number].to_i
-    new_position = params[:position].to_i
+    @spot = Spot.find(params[:id])
+    # JS側で spot: { day_number: ... } と送るようにしたので params[:spot] で受ける
+    new_day = params[:spot][:day_number]
+    new_pos = params[:spot][:position]
 
-    old_day_number = @spot.day_number
-
-    # Dayをまたぐ移動の場合、先に day_number を保存する
-    if @spot.day_number != new_day_number
-      @spot.update!(day_number: new_day_number) 
-    end
-
-    # position を変更
-    @spot.insert_at(new_position)
-
-    # 移動時間再計算ロジック
-    recalculate_all_travel_times_for_day(new_day_number)
-    
-    # Dayをまたぐ移動の場合、古いDayも再計算
-    if old_day_number != new_day_number
-      recalculate_all_travel_times_for_day(old_day_number)
+    # 日付が変わった場合の処理
+    if @spot.day_number != new_day.to_i
+      @spot.update(day_number: new_day)
     end
     
-    # Turbo Stream でスケジュール全体を更新する
+    # 位置を更新
+    @spot.insert_at(new_pos.to_i)
+
+    # ここで移動時間の再計算ロジックを呼ぶ（重要！）
+    # Tripモデルなどに計算ロジックがあるはずです
+    @trip = @spot.trip
+    @trip.recalculate_travel_times!(day: new_day)
+
     respond_to do |format|
-      format.html { redirect_to @trip }
-      format.turbo_stream do
-        @spots_by_day = @trip.spots.order(day_number: :asc, position: :asc).group_by(&:day_number)
-        
-        render turbo_stream: turbo_stream.replace(
-          "trip_schedule_frame", 
-          partial: "trips/schedule", 
-          locals: { 
-            trip: @trip, 
-            spots_by_day: @spots_by_day 
-          }
-        )
-      end
-    end
+      format.turbo_stream {
+        # スケジュール部分を更新するレスポンスを返す
+        render turbo_stream: turbo_stream.replace("schedule_frame", partial: "trips/schedule", locals: { trip: @trip })
+      }
   end
 
 

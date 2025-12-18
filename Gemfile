@@ -69,3 +69,5 @@ gem 'image_processing', '~> 1.14.0'
 gem "stimulus-rails"
 
 gem "turbo-rails"
+
+gem 'acts_as_list'

@@ -1,10 +1,16 @@
+# app/models/spot.rb
 # frozen_string_literal: true
 
 class Spot < ApplicationRecord
   belongs_to :trip
+
+  # scopeを trip_id と day_number にすることで、同じ旅行の同じ日の中で 1, 2, 3... と番号が振られます
   acts_as_list scope: %i[trip_id day_number]
-  before_save :set_position, if: :new_record?
-  before_save :calculate_travel_time_from_previous, if: -> { saved_change_to_latitude? || saved_change_to_longitude? }
+
+  # ▼ 削除した点: set_position は acts_as_list が自動で行うため不要になりました。
+
+  # 緯度・経度が変更された場合に移動時間を計算するコールバック
+  before_save :calculate_travel_time_from_previous, if: -> { (latitude_changed? || longitude_changed?) && geocoded? }
 
   enum :category, { sightseeing: 0, restaurant: 1, accommodation: 2, other: 3 }
 
@@ -13,35 +19,24 @@ class Spot < ApplicationRecord
   validates :estimated_cost, numericality: { only_integer: true, greater_than_or_equal_to: 0 }, allow_nil: true
   validates :travel_time, numericality: { only_integer: true, greater_than_or_equal_to: 0 }, allow_nil: true
 
+  # 緯度・経度がセットされているか判定するヘルパー
+  def geocoded?
+    latitude.present? && longitude.present?
+  end
+
   private
 
-  def set_position
-    return if position.present?
-
-    # Trip全体の最大値を取得して末尾に追加
-    max_position = trip.spots.maximum(:position) || 0
-    self.position = max_position + 1
-  end
-
-  # Metrics解消のためロジックを分離
   def calculate_travel_time_from_previous
-    previous_spot = find_previous_spot
-    return 0 unless previous_spot&.geocoded? && geocoded?
+    previous_spot = higher_item # acts_as_list の提供する「一つ前の要素を取得する」メソッド
+    return unless previous_spot&.geocoded? && geocoded?
 
-    self.travel_time = TravelTimeService.new.calculate_time(previous_spot, self)
-  rescue StandardError => e
-    Rails.logger.error "TravelTime calculation failed: #{e.message}"
-    self.travel_time = 0
-  end
-
-  # Metrics解消のため、前後のスポット検索ロジックを分離
-  def find_previous_spot
-    current_pos = position || (trip.spots.where(day_number: day_number).maximum(:position).to_i + 1)
-
-    trip.spots
-        .where(day_number: day_number)
-        .where(position: ...current_pos)
-        .order(position: :desc)
-        .first
+    # 以前と同じ計算ロジック（TravelTimeService等があればそれを使用）
+    # コントローラー側の計算ロジックと重複する場合は注意が必要ですが、
+    # 基本的にはバックグラウンドまたは保存時に計算する方針でOKです
+    begin
+      self.travel_time = TravelTimeService.new.calculate_time(previous_spot, self)
+    rescue => e
+      Rails.logger.error "TravelTime calculation failed: #{e.message}"
+    end
   end
 end

@@ -18,31 +18,39 @@ export default class extends Controller {
   end(event) {
     const id = event.item.dataset.id
     const newIndex = event.newIndex + 1
+    // 移動先の要素（event.to）から dayNumber を取得
     const newDayNumber = event.to.dataset.dayNumber
 
-    fetch(this.urlValue.replace(":id", id), {
+    // URLの :id 部分を実際のIDに置き換え
+    const url = this.urlValue.replace(":id", id)
+
+    fetch(url, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        // Turbo Stream のレスポンスを受け取るために 'text/vnd.turbo-stream.html' を指定
-        "Accept": "text/vnd.turbo-stream.html",
+        "Accept": "text/vnd.turbo-stream.html", // RailsにTurbo Streamとして返してほしいと伝える
         "X-CSRF-Token": document.querySelector("[name='csrf-token']").content
       },
       body: JSON.stringify({ 
-        position: newIndex,
-        day_number: newDayNumber
+        spot: { 
+          day_number: newDayNumber
+        }
       })
     }) 
-    .then(response => {
-      // ▼▼▼ 修正: 強制リロード (window.location.reload()) を削除 ▼▼▼
+    .then(async response => {
       if (response.ok) {
-        // Turbo Stream がレスポンスを処理するため、ここでは何もしない
+        // Railsから送られてきた Turbo Stream (HTML) を受け取って実行する
+        const streamResponse = await response.text()
+        Turbo.renderStreamMessage(streamResponse)
       } else {
-        console.error('スポットの並び替えに失敗しました。');
+        console.error('スポットの並び替えに失敗しました。ステータス:', response.status);
+        // 失敗した場合はリロードして元の状態に戻す（ユーザーに失敗を知らせるため）
+        window.location.reload()
       }
     })
     .catch(error => {
       console.error('通信エラー:', error);
+      window.location.reload()
     });
   }
 }
