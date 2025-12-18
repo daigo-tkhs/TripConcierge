@@ -1,189 +1,180 @@
-# app/controllers/spots_controller.rb
-
 # frozen_string_literal: true
 require 'uri'
 require 'net/http'
 require 'json' 
 
-class SpotsController < ApplicationController
-  before_action :authenticate_user!
-  before_action :set_trip
-  before_action :set_spot, only: %i[show edit update destroy move]
+class TripsController < ApplicationController
+  # ログインチェックは index と show を除外
+  before_action :authenticate_user!, except: %i[index show]
+  
+  # show アクションでのみゲストトークンをチェックし、有効なら @guest_invitation を設定
+  before_action :check_guest_token_for_show, only: %i[show]
+  
+  before_action :set_trip, only: %i[show edit update destroy sharing clone invite]
+  skip_before_action :basic_auth, only: [:index]
+
+
+  def index
+    @trips = policy_scope(Trip).order(created_at: :desc)
+  end
 
   def show
-    authorize @spot
+    # @trip に対して show? 権限があるかチェック。
+    authorize @trip
+    @hide_header = true
+    
+    # スポットリレーションシップを強制的に再読み込み (キャッシュ対策)
+    @trip.spots.reload 
+    
+    prepare_trip_show_data
   end
 
   def new
-    @hide_header = true
-    @spot = @trip.spots.build
-    authorize @spot
+    @trip = current_user.owned_trips.build
+    authorize @trip 
   end
 
   def edit
-    authorize @spot
+    authorize @trip
+    @hide_header = true
+    
+    # ★ 修正点: @message の初期化を削除。edit.html.erb にチャットフォームがない前提。
   end
 
   def create
-    is_from_chat = params[:spot][:source] == 'chat'
-    @spot = @trip.spots.build(spot_params)
-    authorize @spot
+    @trip = current_user.owned_trips.build(trip_params)
+    authorize @trip
 
-    redirect_destination = is_from_chat ? trip_messages_path(@trip) : @trip 
-                             
-    if @spot.save
-      calculate_and_update_travel_time(@spot)
-      flash[:notice] = "「#{@spot.name}」を旅程のDay #{@spot.day_number}に追加しました。"
-      
-      if is_from_chat
-        respond_to do |format|
-          format.turbo_stream
-          format.html { redirect_to redirect_destination }
-        end
-      else
-        redirect_to @trip
-      end
+    if @trip.save
+      redirect_to @trip, notice: t('messages.trip.create_success')
     else
-      flash[:alert] = "スポットの追加に失敗しました: #{@spot.errors.full_messages.join(', ')}"
-      redirect_to redirect_destination
+      flash.now[:alert] = t('messages.trip.create_failure')
+      render :new, status: :unprocessable_content
     end
   end
 
   def update
-    authorize @spot
-    if @spot.update(spot_params)
-      recalculate_all_travel_times_for_day(@spot.day_number) 
-      
-      respond_to do |format|
-        format.html { redirect_to @trip, notice: t('messages.spot.update_success') }
-        format.turbo_stream do
-          @spots_by_day = @trip.spots.order(day_number: :asc, position: :asc).group_by(&:day_number)
-          flash.now[:notice] = t('messages.spot.update_success')
-          render turbo_stream: [
-            turbo_stream.replace(
-              "trip_schedule_frame", 
-              partial: "trips/schedule", 
-              locals: { trip: @trip, spots_by_day: @spots_by_day }
-            )
-          ]
-        end
-      end
+    authorize @trip
+    
+    if @trip.update(trip_params)
+      redirect_to @trip, notice: t('messages.trip.update_success')
     else
-      flash.now[:alert] = t('messages.spot.update_failure')
+      flash.now[:alert] = t('messages.trip.update_failure')
       render :edit, status: :unprocessable_content
     end
   end
 
   def destroy
-    authorize @spot
-    day_to_recalculate = @spot.day_number
-    @spot.destroy!
-    recalculate_all_travel_times_for_day(day_to_recalculate)
-    redirect_to @trip, notice: t('messages.spot.delete_success'), status: :see_other
+    authorize @trip
+    
+    @trip.destroy
+    redirect_to trips_path, notice: t('messages.trip.delete_success'), status: :see_other
   end
-  
-  def move
-    authorize @spot
-    # JS側の body: JSON.stringify({ spot: { ... } }) に対応
-    new_day = params[:spot][:day_number].to_i
-    new_pos = params[:spot][:position].to_i
-    old_day = @spot.day_number
 
-    # 1. 保存処理
-    if @spot.day_number != new_day
-      @spot.update(day_number: new_day)
-    end
-    @spot.insert_at(new_pos)
+  def sharing
+    authorize @trip
+    @trip_users = @trip.trip_users.includes(:user).where.not(id: nil)
+    @trip_user = @trip.trip_users.build
+    @trip_invitation = @trip.trip_invitations.build
+  end
 
-    # 2. 移動時間の再計算 (移動元と移動先の両方)
-    recalculate_all_travel_times_for_day(new_day)
-    recalculate_all_travel_times_for_day(old_day) if old_day != new_day
+  def invite
+    authorize @trip
+    
+    @trip_invitation = @trip.trip_invitations.build(invitation_params)
+    @trip_invitation.sender = current_user 
 
-    # 3. レスポンス (IDを trip_schedule_frame に合わせる)
-    respond_to do |format|
-      format.turbo_stream {
-        @spots_by_day = @trip.spots.order(day_number: :asc, position: :asc).group_by(&:day_number)
-        render turbo_stream: turbo_stream.replace(
-          "trip_schedule_frame", 
-          partial: "trips/schedule", 
-          locals: { trip: @trip, spots_by_day: @spots_by_day }
-        )
-      }
-      format.html { redirect_to @trip }
+    if @trip_invitation.save
+      UserMailer.with(invitation: @trip_invitation, inviter: current_user).invite_email.deliver_now
+      
+      redirect_to sharing_trip_path(@trip), notice: t('messages.invitation.sent_success', default: '招待状を送信しました。')
+    else
+      @trip_users = @trip.trip_users.includes(:user).where.not(id: nil)
+      @trip_user = @trip.trip_users.build
+      flash.now[:alert] = t('messages.invitation.send_failure', default: '招待の送信に失敗しました。入力内容を確認してください。')
+      render :sharing, status: :unprocessable_content
     end
   end
+
+  def clone
+    authorize @trip
+    
+    cloned_trip = @trip.clone_with_spots(current_user)
+    redirect_to cloned_trip, notice: t('messages.trip.clone_success')
+  end
+
 
   private
+  
+  # ゲストトークンをチェックし、有効なら @guest_invitation を設定する
+  def check_guest_token_for_show
+    # 未ログイン時のみ処理
+    return if user_signed_in? || session[:guest_token].blank?
+
+    invitation = TripInvitation.find_by(token: session[:guest_token])
+    
+    # 招待状が存在し、有効期限内であり、アクセスしようとしている旅程と一致するか
+    if invitation&.valid_invitation? && invitation.trip_id.to_s == params[:id].to_s
+      @guest_invitation = invitation
+    else
+      session.delete(:guest_token) # 無効なら削除
+    end
+  end
+  
+  def prepare_trip_show_data
+    @spots = @trip.spots.order(:position)
+
+    @trip_days = (@trip.end_date - @trip.start_date).to_i + 1
+    @average_daily_budget = begin
+      @trip.total_budget.to_i / @trip_days.to_f
+    rescue StandardError
+      0.0
+    end
+
+    calculate_spot_totals # このメソッド内でサマリー変数を定義
+
+    # 日別内訳の travel, stay を修正
+    @daily_stats = @spots.group_by(&:day_number).transform_values do |day_spots|
+      {
+        cost: day_spots.sum { |s| s.estimated_cost.to_i },
+        travel: day_spots.sum { |s| s.travel_time.to_i },
+        stay: day_spots.sum { |s| s.duration.to_i } 
+      }
+    end
+
+    @has_checklist = @trip.checklist_items.any?
+    
+    token = @trip.invitation_token
+    @invitation_link = token ? invitation_url(token) : nil
+  end
+
+  # サマリーカードの合計値を正しく計算する
+  def calculate_spot_totals
+    @total_travel_mins = @spots.sum(:travel_time).to_i       
+    @total_duration_mins = @spots.sum(:duration).to_i         
+    @total_estimated_cost = @spots.sum(:estimated_cost).to_i  
+
+    # 総所要時間 (滞在時間 + 移動時間)
+    @grand_total_mins = @total_travel_mins + @total_duration_mins
+  end
 
   def set_trip
-    @trip = Trip.find(params[:trip_id])
+    if user_signed_in?
+      @trip = Trip.shared_with_user(current_user).find(params[:id])
+    elsif @guest_invitation
+      @trip = @guest_invitation.trip
+    else
+      @trip = Trip.find(params[:id]) 
+    end
   rescue ActiveRecord::RecordNotFound
-    redirect_to root_path, alert: t('messages.trip.not_found_simple')
-  end
-
-  def set_spot
-    @spot = @trip.spots.find(params[:id])
-  end
-
-  def spot_params
-    params.require(:spot).permit(
-      :name, :description, :address, :category, :estimated_cost, 
-      :duration, :travel_time, :day_number, :position, 
-      :latitude, :longitude, :reservation_required
-    ).tap do |whitelisted|
-      if whitelisted[:estimated_cost].present?
-        whitelisted[:estimated_cost] = whitelisted[:estimated_cost].to_s.gsub(/[^0-9]/, '').to_i
-      end
-    end
+    redirect_to root_path, alert: t('messages.trip.not_found')
   end
   
-  # ... (calculate_and_update_travel_time と recalculate_all_travel_times_for_day は変更なし) ...
-  def calculate_and_update_travel_time(new_spot)
-    previous_spot = @trip.spots.order(:position).where(day_number: new_spot.day_number).where('position < ?', new_spot.position).last
-    if previous_spot.present? && new_spot.latitude.present? && new_spot.longitude.present? && previous_spot.latitude.present? && previous_spot.longitude.present?
-      begin
-        api_key = ENV['GOOGLE_MAPS_API_KEY'] || ENV['Maps_API_KEY']
-        return unless api_key.present?
-        origin = "#{previous_spot.latitude},#{previous_spot.longitude}"
-        destination = "#{new_spot.latitude},#{new_spot.longitude}"
-        base_url = "https://maps.googleapis.com/maps/api/directions/json"
-        params = { origin: origin, destination: destination, key: api_key, mode: 'driving' }
-        uri = URI(base_url); uri.query = URI.encode_www_form(params)
-        response = Net::HTTP.get_response(uri); data = JSON.parse(response.body)
-        if data['status'] == 'OK' && data['routes'].present?
-          duration_in_seconds = data['routes'][0]['legs'][0]['duration']['value'].to_i
-          travel_time_in_minutes = (duration_in_seconds / 60.0).round.to_i 
-          previous_spot.update_columns(travel_time: travel_time_in_minutes, updated_at: Time.current)
-        end
-      rescue => e; Rails.logger.error "Google Maps API Error: #{e.message}"; end
-    end
+  def trip_params
+    params.require(:trip).permit(:title, :start_date, :end_date, :total_budget, :travel_theme)
   end
   
-  def recalculate_all_travel_times_for_day(day_number)
-    spots_on_day = @trip.spots.where(day_number: day_number).order(:position)
-    return unless spots_on_day.present?
-    spots_on_day.first.update_columns(travel_time: nil, updated_at: Time.current)
-    spots_on_day.each_with_index do |current_spot, index|
-      next if index == 0
-      previous_spot = spots_on_day[index - 1]
-      if previous_spot.latitude.present? && previous_spot.longitude.present? && current_spot.latitude.present? && current_spot.longitude.present?
-        begin
-          api_key = ENV['GOOGLE_MAPS_API_KEY'] || ENV['Maps_API_KEY']
-          next unless api_key.present?
-          origin = "#{previous_spot.latitude},#{previous_spot.longitude}"
-          destination = "#{current_spot.latitude},#{current_spot.longitude}"
-          uri = URI("https://maps.googleapis.com/maps/api/directions/json")
-          uri.query = URI.encode_www_form({ origin: origin, destination: destination, key: api_key, mode: 'driving' })
-          data = JSON.parse(Net::HTTP.get(uri))
-          if data['status'] == 'OK'
-            minutes = (data['routes'][0]['legs'][0]['duration']['value'] / 60.0).round.to_i
-            previous_spot.update_columns(travel_time: minutes, updated_at: Time.current)
-          end
-        rescue => e; Rails.logger.error "Error: #{e.message}"; end
-      else
-        previous_spot.update_columns(travel_time: nil, updated_at: Time.current)
-      end
-    end
-    spots_on_day.last.update_columns(travel_time: nil, updated_at: Time.current) if spots_on_day.size > 0
+  def invitation_params
+    params.permit(:email, :role)
   end
 end
