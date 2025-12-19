@@ -147,7 +147,6 @@
   </div>
 
   <%# --- 4. AIチャットボタン (FAB) --- %>
-  <%# 【④修正】閲覧権限があるユーザーなら表示（メンバー含む） %>
   <% if @trip && @trip.viewable_by?(current_user) %>
     <div class="fixed bottom-24 left-0 w-full z-30 pointer-events-none">
       <div class="w-full max-w-md md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto relative px-4">
@@ -169,7 +168,5 @@
     </div>
   <% end %>
 
-  <%# --- Google Maps API スクリプト --- %>
-  <script src="https://maps.googleapis.com/maps/api/js?key=<%= ENV['GOOGLE_MAPS_API_KEY'] || ENV['Maps_API_KEY'] %>&callback=mapControllerInit&loading=async" async defer></script>
 
 </div>
