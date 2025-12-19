@@ -12,56 +12,41 @@ export default class extends Controller {
   }
 
   loadGoogleMaps() {
-    // 既に読み込まれており、かつ importLibrary が使えるか確認
-    if (window.google && window.google.maps && window.google.maps.importLibrary) {
+    if (window.google && window.google.maps) {
       this.initMap()
       return
     }
 
-    const existingScript = document.querySelector(`script[src*="maps.googleapis.com/maps/api/js"]`)
-    if (existingScript) {
-      existingScript.addEventListener("load", () => this.initMap())
-      return
-    }
-
     const script = document.createElement("script")
-    // v=weekly と libraries=places を指定。loading=async も付与してパフォーマンス最適化
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${this.apiKeyValue}&libraries=places&v=weekly&loading=async`
+    // libraries=places,marker を指定し、v=beta（最新機能用）を指定します
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${this.apiKeyValue}&libraries=places,marker&v=beta`
     script.async = true
     script.defer = true
     script.onload = () => this.initMap()
     document.head.appendChild(script)
   }
 
-  async initMap() {
+  initMap() {
     if (!this.hasContainerTarget) return
 
-    try {
-      // 最新のライブラリを明示的に読み込む（これがズレを防ぐ鍵です）
-      const { Map } = await google.maps.importLibrary("maps")
-      const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker")
-
-      const mapOptions = {
-        center: { lat: 35.6812, lng: 139.7671 },
-        zoom: 12,
-        mapId: "DEMO_MAP_ID", // 青いピン（AdvancedMarker）の使用に必須
-        mapTypeControl: false,
-        streetViewControl: false,
-        fullscreenControl: false
-      }
-
-      this.map = new Map(this.containerTarget, mapOptions)
-      
-      // マーカーと写真を読み込む
-      this.addMarkers(AdvancedMarkerElement, PinElement)
-      this.loadSpotPhotos()
-
-    } catch (error) {
-      console.error("Error initializing Google Maps:", error)
+    // importLibrary を使わず、直接クラスを参照します
+    // これにより "is not a function" エラーを確実に回避します
+    const mapOptions = {
+      center: { lat: 35.6812, lng: 139.7671 },
+      zoom: 12,
+      mapId: "DEMO_MAP_ID", // 青いピン(AdvancedMarker)に必須
+      mapTypeControl: false,
+      streetViewControl: false,
+      fullscreenControl: false
     }
+
+    this.map = new google.maps.Map(this.containerTarget, mapOptions)
+    
+    this.addMarkers()
+    this.loadSpotPhotos()
   }
 
-  addMarkers(AdvancedMarkerElement, PinElement) {
+  addMarkers() {
     if (!this.markersValue || this.markersValue.length === 0) return
 
     const bounds = new google.maps.LatLngBounds()
@@ -69,15 +54,15 @@ export default class extends Controller {
     this.markersValue.forEach((markerData, index) => {
       const position = { lat: parseFloat(markerData.lat), lng: parseFloat(markerData.lng) }
       
-      // 正確で青いピン（AdvancedMarker）を作成
-      const pin = new PinElement({
-        glyphText: `${index + 1}`, // glyph ではなく glyphText を使用してエラー回避
+      // AdvancedMarkerElement を直接 new します
+      const pin = new google.maps.marker.PinElement({
+        glyphText: `${index + 1}`,
         background: "#2563EB",
         borderColor: "#1E40AF",
         glyphColor: "white",
       })
 
-      new AdvancedMarkerElement({
+      new google.maps.marker.AdvancedMarkerElement({
         position: position,
         map: this.map,
         title: markerData.title,
@@ -99,7 +84,6 @@ export default class extends Controller {
   loadSpotPhotos() {
     if (!this.hasSpotImageTarget) return
 
-    // Placesライブラリを使用して写真を検索
     const service = new google.maps.places.PlacesService(this.map)
 
     this.spotImageTargets.forEach(target => {
