@@ -39,7 +39,6 @@ class SpotsController < ApplicationController
         format.html { redirect_to redirect_destination }
       end
     else
-      # ▼▼▼ 修正: エラー時はシンプルに render :new を返す（これでフォームのエラーも表示されます） ▼▼▼
       flash.now[:alert] = "入力内容を確認してください。"
       render :new, status: :unprocessable_entity
     end
