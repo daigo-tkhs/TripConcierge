@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["container", "spotImage"]
+  static targets = ["container"] 
   static values = { apiKey: String, markers: Array }
 
   connect() {
@@ -9,13 +9,15 @@ export default class extends Controller {
   }
 
   loadGoogleMaps() {
-    if (window.google && window.google.maps) {
+    // 既に読み込まれていて、かつマーカー機能(marker)も存在するかチェック
+    if (window.google && window.google.maps && window.google.maps.marker) {
       this.initMap()
       return
     }
+
     const script = document.createElement("script")
-    // v=weekly で安定版を読み込みます
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${this.apiKeyValue}&libraries=places&v=weekly`
+    // v=weekly (安定版) を指定
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${this.apiKeyValue}&libraries=places,marker&v=weekly`
     script.async = true
     script.defer = true
     script.onload = () => this.initMap()
@@ -25,16 +27,20 @@ export default class extends Controller {
   initMap() {
     if (!this.hasContainerTarget) return
 
-    // ズレを防ぐため、シンプルな設定にします
+    if (!google.maps.marker) {
+      console.error("Marker library not loaded.")
+      return
+    }
+
     const mapOptions = {
       center: { lat: 35.6812, lng: 139.7671 },
       zoom: 12,
+      mapId: "DEMO_MAP_ID",
       mapTypeControl: false,
       streetViewControl: false,
       fullscreenControl: false
     }
 
-    // importLibraryを使わず、直接 new google.maps.Map します
     this.map = new google.maps.Map(this.containerTarget, mapOptions)
     this.addMarkers()
     this.loadSpotPhotos()
@@ -44,34 +50,28 @@ export default class extends Controller {
     if (!this.markersValue || this.markersValue.length === 0) return
     const bounds = new google.maps.LatLngBounds()
 
+    const { AdvancedMarkerElement, PinElement } = google.maps.marker
+
     this.markersValue.forEach((markerData, index) => {
       const position = { lat: parseFloat(markerData.lat), lng: parseFloat(markerData.lng) }
       
-      // 標準の Marker を使用（これが一番ズレません）
-      new google.maps.Marker({
+      const pin = new PinElement({
+        glyphText: `${index + 1}`,
+        background: "#2563EB",
+        borderColor: "#1E40AF",
+        glyphColor: "white",
+      })
+
+      new AdvancedMarkerElement({
         position: position,
         map: this.map,
         title: markerData.title,
-        label: {
-          text: `${index + 1}`,
-          color: "white",
-          fontWeight: "bold"
-        },
-        // アイコンの設定（青いピンに見せる）
-        icon: {
-            path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
-            scale: 6,
-            fillColor: "#2563EB",
-            fillOpacity: 1,
-            strokeWeight: 2,
-            strokeColor: "#1E40AF" 
-        }
+        content: pin.element
       })
       bounds.extend(position)
     })
 
     this.map.fitBounds(bounds)
-    
     if (this.markersValue.length === 1) {
       google.maps.event.addListenerOnce(this.map, "idle", () => {
         this.map.setZoom(15)
@@ -79,26 +79,45 @@ export default class extends Controller {
     }
   }
 
-  loadSpotPhotos() {
-    if (!this.hasSpotImageTarget) return
+  // ▼▼▼ ここを「Places API (New)」の書き方に完全リニューアル ▼▼▼
+  async loadSpotPhotos() {
+    const targets = document.querySelectorAll('[data-map-target="spotImage"]')
+    if (targets.length === 0) return
 
-    // Google Places サービスを初期化
-    const service = new google.maps.places.PlacesService(this.map)
+    // 最新の Places ライブラリを読み込みます
+    // ※ importLibraryは非同期なので await が必要ですが、このメソッド自体が async なのでOK
+    let Place;
+    try {
+        const lib = await google.maps.importLibrary("places");
+        Place = lib.Place;
+    } catch (e) {
+        console.error("Places library import failed:", e);
+        return;
+    }
 
-    this.spotImageTargets.forEach(target => {
+    targets.forEach(async (target) => {
       const spotName = target.dataset.spotName
       if (!spotName) return
 
-      // スポット名で写真を検索
-      service.findPlaceFromQuery({
-        query: spotName,
-        fields: ['photos']
-      }, (results, status) => {
-        if (status === google.maps.places.PlacesServiceStatus.OK && results && results[0].photos) {
-          const photoUrl = results[0].photos[0].getUrl({ maxWidth: 400 })
-          this.injectPhoto(target, photoUrl)
+      try {
+        // 【重要】新しい「テキスト検索（New）」を使用
+        // searchByText は Promise を返すので await で待ちます
+        const { places } = await Place.searchByText({
+            textQuery: spotName,
+            fields: ['photos'], // 必要なフィールドのみ指定（節約）
+            maxResultCount: 1,  // 1件だけ取得
+        });
+
+        if (places && places.length > 0 && places[0].photos && places[0].photos.length > 0) {
+            const photo = places[0].photos[0];
+            // 新しいAPIでは getUrl() ではなく getURI() を使う場合がありますが
+            // 最新のJS SDKでは getURI() が推奨されています
+            const photoUrl = photo.getURI({ maxWidth: 400 });
+            this.injectPhoto(target, photoUrl);
         }
-      })
+      } catch (error) {
+        console.warn(`Photo fetch failed for ${spotName}:`, error);
+      }
     })
   }
 

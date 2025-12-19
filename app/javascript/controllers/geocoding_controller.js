@@ -7,30 +7,27 @@ export default class extends Controller {
 
   connect() {
     this.geocodeDebounced = debounce(this.geocode, 800)
-    
-    // ▼▼▼ 修正: Mapコントローラーと同じ設定でAPIを読み込む ▼▼▼
     this.loadGoogleMaps()
-    
-    // 初期状態はボタン無効（緯度経度がないため）
     this.toggleSubmitButton()
   }
 
-  // ▼▼▼ 追加: API読み込み処理（これが無いと動きません） ▼▼▼
   loadGoogleMaps() {
-    if (window.google && window.google.maps) return
+    // マーカー機能(marker)まで読み込まれているかチェック
+    if (window.google && window.google.maps && window.google.maps.marker) return
 
     const existingScript = document.querySelector(`script[src*="maps.googleapis.com/maps/api/js"]`)
+    // 既存スクリプトがあっても、markerが含まれていないURLなら無視して読み込み直す判定が必要だが
+    // 今回は重複を避けるため、既存があれば一旦任せる（ただしGeocodingが先に走るとMapが失敗するリスクはある）
     if (existingScript) return
 
     const script = document.createElement("script")
-    // v=weekly と libraries=places,marker を指定して map_controller.js と統一
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${this.apiKeyValue}&libraries=places,marker&loading=async&v=weekly`
+    // ▼▼▼ Mapコントローラーと完全に一致させる (libraries=places,marker) ▼▼▼
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${this.apiKeyValue}&libraries=places,marker&v=weekly`
     script.async = true
     script.defer = true
     document.head.appendChild(script)
   }
 
-  // ▼▼▼ 修正: fetch ではなく google.maps.Geocoder を使用 ▼▼▼
   async geocode() {
     const address = this.addressTarget.value
     this.toggleSubmitButton(false)
@@ -40,10 +37,7 @@ export default class extends Controller {
       return
     }
 
-    if (!window.google || !window.google.maps) {
-      console.warn("Google Maps API not loaded yet.")
-      return
-    }
+    if (!window.google || !window.google.maps) return
 
     const geocoder = new google.maps.Geocoder()
 
@@ -73,18 +67,10 @@ export default class extends Controller {
 
   toggleSubmitButton(forceState = null) {
     if (!this.hasSubmitTarget) return
-
     const coordsPresent = this.latitudeTarget.value && this.longitudeTarget.value
-    let isEnabled
-
-    if (forceState !== null) {
-      isEnabled = forceState
-    } else {
-      isEnabled = coordsPresent
-    }
+    let isEnabled = forceState !== null ? forceState : coordsPresent
 
     this.submitTarget.disabled = !isEnabled
-    
     if (isEnabled) {
       this.submitTarget.classList.remove('opacity-50', 'cursor-not-allowed')
       this.submitTarget.classList.add('cursor-pointer')
