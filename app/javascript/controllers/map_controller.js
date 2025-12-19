@@ -48,12 +48,19 @@ export default class extends Controller {
 
   addMarkers() {
     if (!this.markersValue || this.markersValue.length === 0) return
+    
+    // 表示範囲を管理するオブジェクト
     const bounds = new google.maps.LatLngBounds()
-
     const { AdvancedMarkerElement, PinElement } = google.maps.marker
 
     this.markersValue.forEach((markerData, index) => {
-      const position = { lat: parseFloat(markerData.lat), lng: parseFloat(markerData.lng) }
+      const lat = parseFloat(markerData.lat)
+      const lng = parseFloat(markerData.lng)
+      
+      // 座標が不正な場合はスキップ
+      if (isNaN(lat) || isNaN(lng)) return
+
+      const position = { lat: lat, lng: lng }
       
       const pin = new PinElement({
         glyphText: `${index + 1}`,
@@ -68,13 +75,19 @@ export default class extends Controller {
         title: markerData.title,
         content: pin.element
       })
+
+      // この座標を範囲に含める
       bounds.extend(position)
     })
 
+    // 全てのピンが見えるように地図をズーム・移動
     this.map.fitBounds(bounds)
+
+    // ピンが1つだけの場合、fitBoundsだとズームしすぎるので調整
     if (this.markersValue.length === 1) {
-      google.maps.event.addListenerOnce(this.map, "idle", () => {
+      const listener = google.maps.event.addListener(this.map, "idle", () => {
         this.map.setZoom(15)
+        google.maps.event.removeListener(listener)
       })
     }
   }

@@ -134,21 +134,24 @@ class SpotsController < ApplicationController
     spots_on_day = @trip.spots.where(day_number: day_number).order(:position)
     return unless spots_on_day.present?
     
-    spots_on_day.first.update_columns(travel_time: nil, updated_at: Time.current)
+    # 全てのスポットの移動時間を一旦リセット（これによって最後尾のゴミデータが消える）
+    spots_on_day.update_all(travel_time: nil)
     
     spots_on_day.each_with_index do |current_spot, index|
-      next if index == 0
-      previous_spot = spots_on_day[index - 1]
+      # 最後のスポットには「次の場所」がないので計算をスキップ
+      next if index == spots_on_day.size - 1
       
-      if previous_spot.geocoded? && current_spot.geocoded?
+      next_spot = spots_on_day[index + 1]
+      
+      if current_spot.geocoded? && next_spot.geocoded?
         begin
           api_key = ENV['GOOGLE_MAPS_API_KEY'] || ENV['Maps_API_KEY']
           next unless api_key.present?
           
           uri = URI("https://maps.googleapis.com/maps/api/directions/json")
           uri.query = URI.encode_www_form({
-            origin: "#{previous_spot.latitude},#{previous_spot.longitude}",
-            destination: "#{current_spot.latitude},#{current_spot.longitude}",
+            origin: "#{current_spot.latitude},#{current_spot.longitude}",
+            destination: "#{next_spot.latitude},#{next_spot.longitude}",
             key: api_key,
             mode: 'driving'
           })
@@ -156,7 +159,8 @@ class SpotsController < ApplicationController
           data = JSON.parse(Net::HTTP.get(uri))
           if data['status'] == 'OK'
             duration = (data['routes'][0]['legs'][0]['duration']['value'] / 60.0).round.to_i
-            previous_spot.update_columns(travel_time: duration, updated_at: Time.current)
+            # 「今のスポットから次への移動時間」として保存
+            current_spot.update_columns(travel_time: duration, updated_at: Time.current)
           end
         rescue => e
           Rails.logger.error "Travel recalculate error: #{e.message}"
@@ -164,4 +168,6 @@ class SpotsController < ApplicationController
       end
     end
   end
+
+  
 end
