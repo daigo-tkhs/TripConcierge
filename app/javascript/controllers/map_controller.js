@@ -1,7 +1,9 @@
+// app/javascript/controllers/map_controller.js
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["container", "spotImage"] // spotImageターゲットを追加
+  // spotImage ターゲットを追加（リスト上の写真枠）
+  static targets = ["container", "spotImage"]
   static values = {
     apiKey: String,
     markers: Array
@@ -12,23 +14,20 @@ export default class extends Controller {
   }
 
   loadGoogleMaps() {
-    // 既にAPIが読み込まれているかチェック
     if (window.google && window.google.maps) {
       this.initMap()
       return
     }
 
-    // 重複読み込み防止: 既にスクリプトタグがあるかチェック
     const existingScript = document.querySelector(`script[src*="maps.googleapis.com/maps/api/js"]`)
     if (existingScript) {
       existingScript.addEventListener("load", () => this.initMap())
       return
     }
 
-    // APIスクリプトを動的に生成
     const script = document.createElement("script")
-    // placesライブラリとmarkerライブラリを追加
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${this.apiKeyValue}&libraries=places,marker&loading=async`
+    // Placesライブラリが必要なので libraries=places,marker を指定
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${this.apiKeyValue}&libraries=places,marker&loading=async&v=weekly`
     script.async = true
     script.defer = true
     script.onload = () => this.initMap()
@@ -38,14 +37,14 @@ export default class extends Controller {
   async initMap() {
     if (!this.hasContainerTarget) return
 
-    // マップ初期化 (mapIdは必須。DEMO_MAP_IDを使用)
     const { Map } = await google.maps.importLibrary("maps")
     const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker")
 
+    // マップ初期化
     const mapOptions = {
       center: { lat: 35.6812, lng: 139.7671 },
       zoom: 12,
-      mapId: "DEMO_MAP_ID", // AdvancedMarkerには必須
+      mapId: "DEMO_MAP_ID",
       mapTypeControl: false,
       streetViewControl: false,
       fullscreenControl: false
@@ -56,7 +55,7 @@ export default class extends Controller {
     // マーカー追加
     this.addMarkers(AdvancedMarkerElement, PinElement)
     
-    // 写真取得処理の開始
+    // ▼▼▼ 写真取得の開始 ▼▼▼
     this.loadSpotPhotos()
   }
 
@@ -68,10 +67,9 @@ export default class extends Controller {
     this.markersValue.forEach((markerData, index) => {
       const position = { lat: parseFloat(markerData.lat), lng: parseFloat(markerData.lng) }
       
-      // ピンのデザイン設定
       const pin = new PinElement({
         glyph: `${index + 1}`,
-        background: "#2563EB", // Blue-600
+        background: "#2563EB",
         borderColor: "#1E40AF",
         glyphColor: "white",
       })
@@ -89,7 +87,6 @@ export default class extends Controller {
     this.map.fitBounds(bounds)
     
     if (this.markersValue.length === 1) {
-      // 1点だけの場合、少し引いた位置で表示しないと近すぎる
       const listener = google.maps.event.addListener(this.map, "idle", () => { 
         this.map.setZoom(15) 
         google.maps.event.removeListener(listener)
@@ -97,25 +94,28 @@ export default class extends Controller {
     }
   }
 
-  // --- 写真取得機能 ---
+  // --- ▼▼▼ 写真取得機能 ▼▼▼ ---
   loadSpotPhotos() {
     if (!this.hasSpotImageTarget) return
 
-    // PlacesServiceの初期化（マップがないと動かないためここで初期化）
+    // PlacesService を使うにはマップのインスタンスが必要
     const service = new google.maps.places.PlacesService(this.map)
 
     this.spotImageTargets.forEach(target => {
+      // HTML側で設定したデータ属性からスポット名を取得
       const spotName = target.dataset.spotName
       if (!spotName) return
 
       const request = {
         query: spotName,
-        fields: ['photos'] // 写真のみ取得
+        fields: ['photos'] // 写真のみ要求（コスト節約）
       }
 
+      // Google Places API で検索
       service.findPlaceFromQuery(request, (results, status) => {
-        if (status === google.maps.places.PlacesServiceStatus.OK && results && results[0].photos) {
-          const photoUrl = results[0].photos[0].getUrl({ maxWidth: 200, maxHeight: 200 })
+        if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length > 0 && results[0].photos) {
+          // 写真URLを取得 (最大幅400px)
+          const photoUrl = results[0].photos[0].getUrl({ maxWidth: 400 })
           this.injectPhoto(target, photoUrl)
         }
       })
@@ -123,16 +123,16 @@ export default class extends Controller {
   }
 
   injectPhoto(targetElement, url) {
-    // 既存のプレースホルダーアイコンを隠す
-    const placeholder = targetElement.querySelector('.placeholder-icon')
-    if (placeholder) placeholder.style.display = 'none'
-
-    // 画像要素を作成して挿入
+    // 画像タグを作成
     const img = document.createElement('img')
     img.src = url
     img.className = "w-full h-full object-cover transition-opacity duration-500 opacity-0"
+    
+    // 読み込み完了後にフェードイン
     img.onload = () => img.classList.remove('opacity-0')
     
+    // 既存のアイコン（灰色）をクリアして画像を追加
+    targetElement.innerHTML = ''
     targetElement.appendChild(img)
   }
 }
