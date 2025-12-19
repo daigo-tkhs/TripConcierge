@@ -26,14 +26,22 @@ class SpotsController < ApplicationController
     is_from_chat = params[:spot][:source] == 'chat'
     @spot = @trip.spots.build(spot_params)
 
-    # チャットから来たならチャットへ、そうでなければ旅程詳細へ戻る
-    redirect_destination = is_from_chat ? trip_messages_path(@trip) : @trip 
-                             
     if @spot.save
       calculate_and_update_travel_time(@spot)
-      redirect_to redirect_destination, notice: "「#{@spot.name}」を旅程のDay #{@spot.day_number}に追加しました。"
+      
+      respond_to do |format|
+        format.turbo_stream do
+          # チャットからの場合は、リダイレクトせずに演出用ストリームを返す
+          render turbo_stream: [
+            turbo_stream.append("messages", html: "<script>if(window.showSuccessAnimation){ window.showSuccessAnimation('#{@spot.name} を追加しました！'); }</script>".html_safe)
+          ]
+        end
+        format.html do
+          redirect_destination = is_from_chat ? trip_messages_path(@trip) : @trip
+          redirect_to redirect_destination, notice: "「#{@spot.name}」を旅程に追加しました。"
+        end
+      end
     else
-      # エラー時は入力画面を再表示
       flash.now[:alert] = "入力内容を確認してください。"
       render :new, status: :unprocessable_entity
     end

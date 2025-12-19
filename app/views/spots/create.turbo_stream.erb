@@ -1,26 +1,26 @@
 <%# app/views/spots/create.turbo_stream.erb %>
 
-<%# 1. 押されたボタン（フォーム全体）を「追加済み」バッジに置き換える %>
-<%= turbo_stream.replace params[:unique_form_id] do %>
-  <div class="mt-3 pt-2 border-t border-gray-100 flex items-center justify-center gap-2 text-green-600 bg-green-50 p-2 rounded-lg">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
-      <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
-    </svg>
-    <span class="text-sm font-bold">Day <%= @spot.day_number %>に追加しました</span>
-  </div>
+<%# 1. ユーザーのメッセージを追加 %>
+<%= turbo_stream.append "messages" do %>
+  <%= render "messages/user_message", message: @message %>
 <% end %>
 
-<%# 2. フラッシュメッセージを表示（もし shared/_flash_message があれば） %>
-<%= turbo_stream.append "flash-messages" do %>
-  <% if flash[:notice] %>
-    <div class="fixed top-4 right-4 bg-white border-l-4 border-green-500 shadow-lg rounded-r px-4 py-3 animate-fade-in-down z-50">
-      <div class="flex items-center">
-        <div class="py-1"><svg class="fill-current h-6 w-6 text-green-500 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zm12.73-1.41A8 8 0 1 0 4.34 4.34a8 8 0 0 0 11.32 11.32zM6.7 9.29L9 11.6l4.3-4.3 1.4 1.42L9 14.4l-3.7-3.7 1.4-1.42z"/></svg></div>
-        <div>
-          <p class="font-bold">成功</p>
-          <p class="text-sm"><%= flash[:notice] %></p>
-        </div>
-      </div>
-    </div>
+<%# 2. AIの返答を追加（もしあれば） %>
+<% if @ai_message.present? %>
+  <%= turbo_stream.append "messages" do %>
+    <%= render "messages/ai_message", message: @ai_message %>
   <% end %>
+<% end %>
+
+<%# 3. 入力フォームをリセット %>
+<%= turbo_stream.replace "new_message_area" do %>
+  <%= render "messages/form", trip: @trip, message: Message.new %>
+<% end %>
+
+<%# 4. スクロール処理 %>
+<%= turbo_stream.append "messages" do %>
+  <script>
+    const anchor = document.getElementById("scroll-anchor");
+    if (anchor) anchor.scrollIntoView({ behavior: "smooth" });
+  </script>
 <% end %>
