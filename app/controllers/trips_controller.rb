@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require 'uri'
 require 'net/http'
-require 'json' 
+require 'json'
 
 class TripsController < ApplicationController
   before_action :authenticate_user!, except: %i[index show]
@@ -16,24 +16,20 @@ class TripsController < ApplicationController
   def show
     authorize @trip
     @hide_header = true
-    @trip.spots.reload 
+    @trip.spots.reload
     prepare_trip_show_data
   end
 
   def new
     @trip = current_user.owned_trips.build
-    authorize @trip 
+    authorize @trip
   end
 
   def edit
-    @trip = Trip.find(params[:id])
-    
-    # Punditを使わず、モデルの権限ロジックに一本化
     unless @trip.editable_by?(current_user)
-      redirect_to trip_path(@trip), alert: "この旅程を編集する権限がありません。"
+      redirect_to trip_path(@trip), alert: "編集権限がありません。"
       return
     end
-
     @hide_header = true
   end
 
@@ -50,8 +46,6 @@ class TripsController < ApplicationController
   end
 
   def update
-    @trip = Trip.find(params[:id])
-
     unless @trip.editable_by?(current_user)
       redirect_to trip_path(@trip), alert: "編集権限がありません。"
       return
@@ -66,7 +60,6 @@ class TripsController < ApplicationController
     end
   end
 
-  # --- 以降のメソッドは変更なしのため省略可能ですが、ロジックは維持してください ---
   def destroy
     authorize @trip
     @trip.destroy
@@ -83,7 +76,7 @@ class TripsController < ApplicationController
   def invite
     authorize @trip
     @trip_invitation = @trip.trip_invitations.build(invitation_params)
-    @trip_invitation.sender = current_user 
+    @trip_invitation.sender = current_user
 
     if @trip_invitation.save
       UserMailer.with(invitation: @trip_invitation, inviter: current_user).invite_email.deliver_now
@@ -103,7 +96,7 @@ class TripsController < ApplicationController
   end
 
   private
-  
+
   def check_guest_token_for_show
     return if user_signed_in? || session[:guest_token].blank?
     invitation = TripInvitation.find_by(token: session[:guest_token])
@@ -113,17 +106,19 @@ class TripsController < ApplicationController
       session.delete(:guest_token)
     end
   end
-  
+
   def prepare_trip_show_data
     @spots = @trip.spots.order(:position)
-    @trip_days = (@trip.end_date - @trip.start_date).to_i + 1
+    @trip_days = [(@trip.end_date - @trip.start_date).to_i + 1, 1].max
     @average_daily_budget = (@trip.total_budget.to_i / @trip_days.to_f rescue 0.0)
+    
     calculate_spot_totals
+    
     @daily_stats = @spots.group_by(&:day_number).transform_values do |day_spots|
       {
         cost: day_spots.sum { |s| s.estimated_cost.to_i },
         travel: day_spots.sum { |s| s.travel_time.to_i },
-        stay: day_spots.sum { |s| s.duration.to_i } 
+        stay: day_spots.sum { |s| s.duration.to_i }
       }
     end
     @has_checklist = @trip.checklist_items.any?
@@ -132,29 +127,28 @@ class TripsController < ApplicationController
   end
 
   def calculate_spot_totals
-    @total_travel_mins = @spots.sum(:travel_time).to_i       
-    @total_duration_mins = @spots.sum(:duration).to_i         
-    @total_estimated_cost = @spots.sum(:estimated_cost).to_i  
+    @total_travel_mins = @spots.sum { |s| s.travel_time.to_i }
+    @total_duration_mins = @spots.sum { |s| s.duration.to_i }
+    @total_estimated_cost = @spots.sum { |s| s.estimated_cost.to_i }
     @grand_total_mins = @total_travel_mins + @total_duration_mins
   end
 
   def set_trip
     if user_signed_in?
-      # Trip.shared_with_user ロジックを使用
       @trip = Trip.shared_with_user(current_user).find(params[:id])
     elsif @guest_invitation
       @trip = @guest_invitation.trip
     else
-      @trip = Trip.find(params[:id]) 
+      @trip = Trip.find(params[:id])
     end
   rescue ActiveRecord::RecordNotFound
     redirect_to root_path, alert: t('messages.trip.not_found')
   end
-  
+
   def trip_params
     params.require(:trip).permit(:title, :start_date, :end_date, :total_budget, :travel_theme)
   end
-  
+
   def invitation_params
     params.permit(:email, :role)
   end
