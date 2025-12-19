@@ -1,52 +1,42 @@
 <%# app/views/messages/_user_message.html.erb %>
-<%# ローカル変数: message %>
 
 <%= turbo_frame_tag dom_id(message) do %>
-  <div class="flex justify-end items-end gap-2 mb-4 group">
+  <div class="flex justify-end items-start gap-3 mb-6 group">
     
-    <%# メッセージ本文とメタ情報 %>
-    <div class="flex flex-col items-end max-w-[85%]">
-      
-      <%# 吹き出し %>
-      <div class="bg-blue-600 text-white p-3 rounded-2xl rounded-tr-none shadow-md text-sm leading-relaxed text-left">
+    <div class="flex flex-col items-end max-w-[80%]">
+      <%# 吹き出しデザインの強化 %>
+      <div class="bg-blue-600 text-white px-4 py-3 rounded-2xl rounded-tr-none shadow-sm text-sm md:text-base leading-relaxed">
         <%= simple_format(message.prompt, class: "mb-0") %>
       </div>
       
-      <%# 下部情報エリア: 日時・名前・操作ボタン %>
-      <div class="flex items-center justify-end flex-wrap gap-x-3 gap-y-1 mt-1 mr-1">
-        
-        <%# 【追加③】日時と名前 %>
-        <div class="flex items-center gap-2 text-[10px]">
-          <span class="text-gray-400"><%= message.created_at.strftime("%H:%M") %></span>
-          <span class="text-gray-500 font-bold"><%= message.user&.name || "Unknown" %></span>
+      <div class="flex items-center justify-end gap-3 mt-1.5 px-1">
+        <div class="flex items-center gap-2 text-[10px] text-gray-400">
+          <span class="font-bold text-gray-500"><%= message.user&.nickname %></span>
+          <span><%= message.created_at.strftime("%H:%M") %></span>
         </div>
 
-        <%# 編集・削除リンク (本人のみ) %>
         <% if message.user_id == current_user.id %>
-          <div class="flex items-center gap-2 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            <span class="text-gray-300">|</span>
+          <div class="flex items-center gap-2 text-[10px] opacity-0 group-hover:opacity-100 transition-all">
             <%= link_to "編集", edit_trip_message_path(message.trip, message), 
-              class: "text-gray-400 hover:text-blue-600 transition",
+              class: "text-blue-500 hover:underline",
               data: { turbo_frame: dom_id(message) } %>
-            
+            <span class="text-gray-200">|</span>
             <%= button_to '削除', trip_message_path(message.trip, message), 
               method: :delete, 
-              data: { turbo: false, turbo_confirm: '本当に削除しますか？' },
-              class: 'text-red-400 hover:text-red-600 bg-transparent border-0 cursor-pointer p-0' %>
+              data: { turbo_confirm: 'このメッセージを削除しますか？' },
+              class: 'text-red-400 hover:text-red-600' %>
           </div>
         <% end %>
       </div>
     </div>
 
-    <%# 【追加】ユーザーアイコン (名前のイニシャルを表示) %>
-    <div class="flex-shrink-0 mb-6">
+    <%# アイコンエリア %>
+    <div class="flex-shrink-0">
       <% if message.user&.avatar&.attached? %>
-        <%# アバター画像がある場合 %>
-        <%= image_tag message.user.avatar, class: "w-8 h-8 rounded-full object-cover border border-gray-100" %>
+        <%= image_tag message.user.avatar, class: "w-9 h-9 rounded-full object-cover border-2 border-white shadow-sm" %>
       <% else %>
-        <%# アバターがない場合はイニシャルを表示 %>
-        <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-xs font-bold border border-blue-200">
-          <%= message.user&.name&.first&.upcase || "U" %>
+        <div class="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 text-xs font-bold border border-blue-100 shadow-sm">
+          <%= message.user&.nickname&.first&.upcase || "U" %>
         </div>
       <% end %>
     </div>
