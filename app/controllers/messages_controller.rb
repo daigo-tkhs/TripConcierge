@@ -97,14 +97,9 @@ class MessagesController < ApplicationController
       ai_response = raw_response['candidates'][0].dig('content', 'parts', 0, 'text')
     end
 
-    if ai_response.present?
-      cleaned_response = ai_response.gsub(/```json\s*\{.*?\}\s*```/m, '').strip
-      response_text = cleaned_response.present? ? cleaned_response : t('messages.ai.no_valid_response')
-    else
-      response_text = t('messages.ai.no_valid_response')
-    end
+    final_response = ai_response.presence || t('messages.ai.no_valid_response')
 
-    @trip.messages.create!(response: response_text, user_id: nil) 
+    @trip.messages.create!(response: final_response, user_id: nil) 
   end
   
   def build_request_content(message_record)
