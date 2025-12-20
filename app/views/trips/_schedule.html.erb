@@ -3,6 +3,9 @@
 
 <div class="schedule-section space-y-6">
   <% if spots_by_day.present? %>
+    <%# ★追加: 全日程を通した通し番号を管理する変数 %>
+    <% global_index = 0 %>
+
     <% spots_by_day.each do |day_num, spots| %>
       
       <%# nil対策: day_numがない場合は1日目として扱う %>
@@ -29,8 +32,14 @@
              data-day-number="<%= safe_day_num %>">
           
           <% spots.each do |spot| %>
+            <%# ★追加: スポットごとに番号をカウントアップ %>
+            <% global_index += 1 %>
+
             <div class="relative group cursor-move" data-id="<%= spot.id %>">
-              <div class="absolute -left-[31px] top-0 w-4 h-4 rounded-full bg-white border-2 border-blue-500"></div>
+              <%# ★修正: ピンの中に番号を表示 %>
+              <div class="absolute -left-[31px] top-0 w-5 h-5 rounded-full bg-blue-500 border-2 border-white flex items-center justify-center shadow-sm">
+                <span class="text-[10px] text-white font-bold"><%= global_index %></span>
+              </div>
               
               <div class="bg-white rounded-xl p-3 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
                 <div class="flex gap-3">
@@ -53,7 +62,6 @@
                       <p class="text-xs text-gray-500 flex items-center gap-1">
                         <span class="inline-block w-1.5 h-1.5 rounded-full bg-green-400"></span>
                         
-                        <%# ▼▼▼ 修正: category_i18n を使わず、ここで日本語に変換する ▼▼▼ %>
                         <% 
                            category_label = case spot.category
                            when 'sightseeing' then '観光'

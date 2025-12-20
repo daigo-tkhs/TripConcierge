@@ -108,7 +108,8 @@ class TripsController < ApplicationController
   end
 
   def prepare_trip_show_data
-    @spots = @trip.spots.order(:position)
+    # ★修正: 日付順・ポジション順でスポットを確定させる
+    @spots = @trip.spots.order(:day_number, :position)
     @trip_days = [(@trip.end_date - @trip.start_date).to_i + 1, 1].max
     @average_daily_budget = (@trip.total_budget.to_i / @trip_days.to_f rescue 0.0)
     
