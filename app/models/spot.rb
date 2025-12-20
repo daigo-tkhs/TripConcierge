@@ -9,11 +9,17 @@ class Spot < ApplicationRecord
   # 保存・バリデーションの前に「予算」から数字以外の文字を掃除する
   before_validation :clean_estimated_cost
 
+  # ★追加: 施設名(name)を元に、Google Maps APIで正確な緯度経度を検索する
+  geocoded_by :name
+  
+  # ★追加: バリデーション後、自動的に緯度経度を検索して上書きする
+  # (AIが適当な座標を送ってきても、ここでGoogle Mapsの正確な座標に置き換わります)
+  after_validation :geocode, if: ->(obj){ obj.name.present? }
+
   enum :category, { sightseeing: 0, restaurant: 1, accommodation: 2, other: 3 }
 
-  
   # スポット名は必須
-  validates :name, presence: { message: "を入力してください" }, length: { maximum: 50 }  
+  validates :name, presence: { message: "を入力してください" }, length: { maximum: 50 }   
   validates :day_number, presence: { message: "を入力してください" }, numericality: { only_integer: true, greater_than: 0, message: "は1以上の数字で入力してください" }
   validates :estimated_cost, numericality: { only_integer: true, greater_than_or_equal_to: 0 }, allow_nil: true
   validates :travel_time, numericality: { only_integer: true, greater_than_or_equal_to: 0 }, allow_nil: true
@@ -32,7 +38,4 @@ class Spot < ApplicationRecord
     # 全角数字なども考慮する場合、一度文字列にして整形
     self.estimated_cost = estimated_cost.to_s.gsub(/[^\d.]/, '').to_f.to_i
   end
-
-  # 注意: TravelTimeService はまだ作成していないため、
-  # コールバックでの自動計算は削除し、コントローラー側の処理に任せます。
 end
