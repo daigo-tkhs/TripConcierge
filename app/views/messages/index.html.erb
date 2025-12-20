@@ -2,11 +2,12 @@
 <% @hide_header = true %>
 <% @hide_footer = true %>
 
-<%# --- 画面全体：fixed inset-0 で強制的に全画面配置し、親レイアウトの余白を無視させる --- %>
-<div class="fixed inset-0 z-50 bg-gray-50 flex flex-col w-full h-[100dvh] overflow-hidden">
+<%# --- 修正箇所: fixed inset-0 z-50 を削除し、通常のレイアウト内に収まるようにしました --- %>
+<div class="flex flex-col w-full h-[100dvh] bg-gray-50 overflow-hidden">
 
   <%# --- 1. チャット専用ヘッダー --- %>
   <div class="bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md flex-shrink-0 w-full">
+    <%# コンテンツの最大幅をメッセージエリア(3xl)と合わせる場合はここを max-w-3xl に変更してもOKです %>
     <div class="max-w-7xl mx-auto px-4 py-3 md:py-4">
       <div class="flex items-center justify-between gap-3">
         <%= link_to trip_path(@trip), class: "p-2 hover:bg-white/20 rounded-full transition-all flex-shrink-0" do %>
