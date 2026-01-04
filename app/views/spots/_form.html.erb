@@ -15,10 +15,17 @@
   <%# --- 1. 日程選択 --- %>
   <div class="space-y-2">
     <%= f.label :day_number, "何日目の予定？", class: "block text-sm font-bold text-gray-700 ml-1" %>
-    <div class="relative w-32">
-      <%= f.number_field :day_number, min: 1, required: true, class: "w-full px-4 py-3.5 rounded-xl border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-center font-bold text-lg" %>
-      <div class="absolute inset-y-0 right-4 flex items-center pointer-events-none">
-        <span class="text-sm text-gray-500 font-bold">日目</span>
+    
+    <div class="relative">
+      <%= f.select :day_number, 
+          trip_days_options(trip), 
+          { include_blank: false }, 
+          class: "w-full pl-4 pr-10 py-3.5 rounded-xl border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all font-bold text-lg appearance-none cursor-pointer" %>
+      
+      <div class="absolute inset-y-0 right-4 flex items-center pointer-events-none text-gray-500">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9" />
+        </svg>
       </div>
     </div>
   </div>
@@ -70,23 +77,9 @@
         </div>
       </div>
     </div>
-
   </div>
 
-  <%# --- 4. 予約・参考情報 --- %>
-  <div class="space-y-4 pt-4 border-t border-gray-100">
-    <div class="flex items-center">
-      <%= f.check_box :reservation_required, class: "h-5 w-5 text-purple-600 focus:ring-purple-500 border-gray-300 rounded cursor-pointer" %>
-      <%= f.label :reservation_required, "宿泊施設（ホテル・旅館）ですか？", class: "ml-3 block text-sm font-bold text-gray-700 cursor-pointer" %>
-    </div>
-
-    <div class="space-y-2">
-      <%= f.label :booking_url, "予約 / 参考URL", class: "block text-sm font-bold text-gray-700 ml-1" %>
-      <%= f.url_field :booking_url, placeholder: "https://travel.rakuten.co.jp/...", class: "w-full px-4 py-3.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-500 transition-all text-sm placeholder-gray-400" %>
-    </div>
-  </div>
-
-  <%# --- 5. アクションボタン --- %>
+  <%# --- 4. アクションボタン --- %>
   <div class="pt-6">
     <%= f.submit btn_text, class: "w-full py-4 px-6 rounded-full text-white font-bold bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 shadow-lg transform active:scale-95 transition-all cursor-pointer text-lg" %>
     
