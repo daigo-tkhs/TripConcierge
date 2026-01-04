@@ -1,11 +1,10 @@
-<%# スポット追加画面: ヘッダー・フッター表示 %>
+<%# app/views/spots/new.html.erb %>
 
 <div class="min-h-screen w-full bg-gray-50 font-sans pt-12 pb-32">
   <div class="max-w-2xl mx-auto px-6">
     
-    <%# --- 1. ヘッダーエリア（戻るボタン + タイトル） --- %>
+    <%# --- 1. ヘッダーエリア --- %>
     <div class="mb-8 flex items-center gap-4">
-      <%# 戻るボタン: 白背景の円形で浮かせて「戻れる感」を強調 %>
       <%= link_to trip_path(@trip), class: "p-3 bg-white hover:bg-gray-100 rounded-full shadow-sm border border-gray-100 transition-all active:scale-95 flex-shrink-0" do %>
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5 text-gray-600">
           <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
@@ -18,19 +17,11 @@
       </div>
     </div>
 
-    <%# --- 2. カード（外枠）: rounded-3xl と shadow-xl でブランド統一 --- %>
+    <%# --- 2. カード --- %>
     <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden animate-fade-in-up">
-      
-      <%# --- 内部ラッパーコンテナ: ここで 2rem〜3rem の余白を強制確保 --- %>
       <div class="px-8 py-10 md:px-12 md:py-12">
         <%= render 'form', trip: @trip, spot: @spot, btn_text: "スポットを追加する" %>
-        
-        <%# キャンセルボタンもカード内に配置しておくと親切です %>
-        <div class="mt-6">
-          <%= link_to 'キャンセル', trip_path(@trip), class: "w-full block text-center py-4 rounded-full text-gray-400 font-bold bg-gray-50 hover:bg-gray-100 transition-all text-sm" %>
-        </div>
       </div>
-      
     </div>
 
   </div>

@@ -1,3 +1,4 @@
+<%# app/views/layouts/application.html.erb %>
 <!DOCTYPE html>
 <html>
   <head>
@@ -17,36 +18,24 @@
     <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
   </head>
 
-  <%# body自体を画面いっぱいのコンテナにする %>
   <body class="bg-gray-50 text-gray-800 font-sans antialiased min-h-screen flex flex-col">
     
-    <%# 1. ヘッダーを最上位に配置して w-full を活かす %>
     <%= render 'shared/header' unless @hide_header %>
 
-    <%# --- メインコンテンツエリア --- %>
-    <div class="flex-1 w-full mx-auto relative flex flex-col">
-      
-      <div id="flash_container">
-        <% if notice %>
-          <div class="max-w-7xl mx-auto w-full px-4 mt-4">
-            <div class="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 rounded shadow-sm text-sm" role="alert">
-              <p><%= notice %></p>
-            </div>
-          </div>
-        <% end %>
-        <%# (alertも同様に max-w-7xl mx-auto で囲むと綺麗です) %>
-      </div>
+    <%# 
+       ★修正: ここが重要！
+       Turbo Streamのターゲットとなる「箱」をここに設置します。
+       中身のHTMLは _flash_messages.html.erb が提供します。
+    %>
+    <div id="flash" class="fixed top-24 right-4 z-[9999] w-full max-w-sm pointer-events-none">
+      <%= render 'shared/flash_messages' %>
+    </div>
 
-      <%# メインコンテンツ %>
-      <%# 
-          ★重要: trips/new などで max-w-4xl mx-auto を指定しているので、
-          ここでは余計な幅制限をかけず yield させます。
-      %>
+    <div class="flex-1 w-full mx-auto relative flex flex-col">
       <main class="flex-1 w-full">
         <%= yield %>
       </main>
 
-      <%# フッター %>
       <% unless @hide_footer %>
         <%= render "shared/footer" %>
       <% end %>

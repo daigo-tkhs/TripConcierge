@@ -26,16 +26,19 @@ class SpotsController < ApplicationController
     @spot = @trip.spots.build(spot_params)
                              
     if @spot.save
-      # ★不具合修正：メソッド名を正しい名前に修正
       recalculate_all_travel_times_for_day(@spot.day_number)
       
       respond_to do |format|
         format.turbo_stream do
+          @spots_by_day = @trip.spots.order(day_number: :asc, position: :asc).group_by(&:day_number)
+          
           render turbo_stream: [
-            turbo_stream.append("messages", html: "<script>if(window.showSuccessAnimation){ window.showSuccessAnimation('#{@spot.name} を追加しました！'); }</script>".html_safe)
+            # ★修正: localsを使ってメッセージを直接渡します
+            turbo_stream.update("flash", partial: "shared/flash_messages", locals: { message: "#{@spot.name} を追加しました", type: :notice }),
+            turbo_stream.replace("trip_schedule_frame", partial: "trips/schedule", locals: { trip: @trip, spots_by_day: @spots_by_day })
           ]
         end
-        format.html { redirect_to (is_from_chat ? trip_messages_path(@trip) : @trip) }
+        format.html { redirect_to (is_from_chat ? trip_messages_path(@trip) : @trip), notice: "#{@spot.name} を追加しました" }
       end
     else
       flash.now[:alert] = "入力内容を確認してください。"
@@ -48,11 +51,15 @@ class SpotsController < ApplicationController
       recalculate_all_travel_times_for_day(@spot.day_number) 
       
       respond_to do |format|
-        # 通常のフォーム送信（HTML）
         format.html { redirect_to trip_path(@trip), notice: "#{@spot.name} を更新しました。" }
         
         format.turbo_stream do
-          render turbo_stream: turbo_stream.action(:redirect, trip_path(@trip))
+          @spots_by_day = @trip.spots.order(day_number: :asc, position: :asc).group_by(&:day_number)
+          render turbo_stream: [
+            # ★修正: localsを使ってメッセージを直接渡します
+            turbo_stream.update("flash", partial: "shared/flash_messages", locals: { message: "#{@spot.name} を更新しました", type: :notice }),
+            turbo_stream.replace("trip_schedule_frame", partial: "trips/schedule", locals: { trip: @trip, spots_by_day: @spots_by_day })
+          ]
         end
       end
     else
@@ -71,10 +78,11 @@ class SpotsController < ApplicationController
         @spots_by_day = @trip.spots.order(day_number: :asc, position: :asc).group_by(&:day_number)
         render turbo_stream: [
           turbo_stream.replace("trip_schedule_frame", partial: "trips/schedule", locals: { trip: @trip, spots_by_day: @spots_by_day }),
-          turbo_stream.append("flash_container", html: "<script>if(window.showSuccessAnimation){ window.showSuccessAnimation('#{spot_name} を削除しました'); }</script>".html_safe)
+          # ★修正: localsを使ってメッセージを直接渡します
+          turbo_stream.update("flash", partial: "shared/flash_messages", locals: { message: "#{spot_name} を削除しました", type: :alert })
         ]
       end
-      format.html { redirect_to @trip, status: :see_other }
+      format.html { redirect_to @trip, status: :see_other, notice: "#{spot_name} を削除しました" }
     end
   end
   
@@ -122,9 +130,20 @@ class SpotsController < ApplicationController
 
   def spot_params
     params.require(:spot).permit(
-      :name, :description, :address, :category, :estimated_cost, 
-      :duration, :travel_time, :day_number, :position, 
-      :latitude, :longitude, :reservation_required, :booking_url
+      :name, 
+      :description, 
+      :address, 
+      :latitude, 
+      :longitude, 
+      :estimated_cost, 
+      :travel_time, 
+      :category, 
+      :memo, 
+      :reservation_required, 
+      :day_number,           
+      :duration,             
+      :duration_hours,       
+      :duration_minutes      
     )
   end
 
