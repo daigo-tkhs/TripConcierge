@@ -1,8 +1,9 @@
 class StaticPagesController < ApplicationController
-  # 未ログインユーザー（採用担当者含む）に見せるため、Basic認証とログイン認証をスキップ
-  skip_before_action :basic_auth, only: [:top], raise: false
+
+  # ログイン認証はスキップ（未ログインでもLPは見せる）
   skip_before_action :authenticate_user!, only: [:top], raise: false
 
   def top
+    # routes.rbで制御済みのため、ここでのリダイレクト処理は不要です
   end
 end

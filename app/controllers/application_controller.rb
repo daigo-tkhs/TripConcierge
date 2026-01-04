@@ -33,7 +33,7 @@ class ApplicationController < ActionController::Base
 
   def after_sign_out_path_for(_resource_or_scope)
     # ログアウト後のリダイレクト先をログイン画面に設定
-    new_user_session_path
+    root_path
   end
 
   private
