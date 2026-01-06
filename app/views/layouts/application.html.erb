@@ -12,10 +12,13 @@
       <script type="module" src="<%= asset_path 'controllers/map_controller.js' %>"></script>
       <script type="module" src="<%= asset_path 'controllers/sortable_controller.js' %>"></script>
       <script type="module" src="<%= asset_path 'controllers/geocoding_controller.js' %>"></script>
+      <%# ▼▼▼ 追加: これがないと本番で×ボタンが動きません ▼▼▼ %>
+      <script type="module" src="<%= asset_path 'controllers/flash_controller.js' %>"></script>
     <% end %>
     
     <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
 
+    <%# APIキーを直接記述（このままでOK） %>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBvW_gEtHZ40kEAJJjeNyV22SO0tbsmusw&libraries=places,marker&v=weekly&loading=async" async defer></script>
   </head>
 
