@@ -3,7 +3,7 @@
 
 <div class="schedule-section space-y-6">
   <% if spots_by_day.present? %>
-    <%# ★追加: 全日程を通した通し番号を管理する変数 %>
+    <%# 全日程を通した通し番号を管理する変数 %>
     <% global_index = 0 %>
 
     <% spots_by_day.each do |day_num, spots| %>
@@ -32,11 +32,11 @@
              data-day-number="<%= safe_day_num %>">
           
           <% spots.each do |spot| %>
-            <%# ★追加: スポットごとに番号をカウントアップ %>
+            <%# スポットごとに番号をカウントアップ %>
             <% global_index += 1 %>
 
             <div class="relative group cursor-move" data-id="<%= spot.id %>">
-              <%# ★修正: ピンの中に番号を表示 %>
+              <%# ピンの中に番号を表示 %>
               <div class="absolute -left-[31px] top-0 w-5 h-5 rounded-full bg-blue-500 border-2 border-white flex items-center justify-center shadow-sm">
                 <span class="text-[10px] text-white font-bold"><%= global_index %></span>
               </div>
@@ -80,7 +80,7 @@
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5 text-gray-400">
                           <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm.75-13a.75.75 0 0 0-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 0 0 0-1.5h-3.25V5Z" clip-rule="evenodd" />
                         </svg>
-                        <span><%= spot.duration %>分</span>
+                        <span><%= format_duration(spot.duration.to_i) %></span>
                       </div>
                       <div class="flex items-center gap-1">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5 text-gray-400">
@@ -115,7 +115,7 @@
                     <path d="M6.5 3c-1.051 0-2.093.04-3.125.117A1.49 1.49 0 0 0 2 4.607V10.5h9V4.606c0-.771-.59-1.43-1.375-1.489A41.568 41.568 0 0 0 6.5 3ZM2 12v2.5A1.5 1.5 0 0 0 3.5 16h.041a3 3 0 0 1 5.918 0h.791a.75.75 0 0 0 .75-.75V12H2Z" />
                     <path d="M13.25 5a.75.75 0 0 0-.75.75v8.514a3.001 3.001 0 0 1 4.893 1.44c.37-.275.61-.719.595-1.231a20.381 20.381 0 0 0-.176-2.635L17.5 7.5c0-1.33-.96-2.5-2.406-2.5h-.844ZM15.5 18a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" />
                   </svg>
-                  <span class="font-bold">移動 <%= spot.travel_time %>分 (車)</span>
+                  <span class="font-bold">移動 <%= format_duration(spot.travel_time.to_i) %> (車)</span>
                 </div>
               <% end %>
             </div> 
