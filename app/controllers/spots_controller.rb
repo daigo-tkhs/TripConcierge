@@ -1,4 +1,3 @@
-# app/controllers/spots_controller.rb
 # frozen_string_literal: true
 require 'uri'
 require 'net/http'
@@ -29,19 +28,8 @@ class SpotsController < ApplicationController
     if @spot.save
       recalculate_all_travel_times_for_day(@spot.day_number)
       
-      respond_to do |format|
-        format.turbo_stream do
-          @spots_by_day = @trip.spots.order(day_number: :asc, position: :asc).group_by(&:day_number)
-          
-          flash.now[:notice] = "#{@spot.name} を追加しました"
-          
-          render turbo_stream: [
-            turbo_stream.update("flash", partial: "shared/flash_messages"),
-            turbo_stream.replace("trip_schedule_frame", partial: "trips/schedule", locals: { trip: @trip, spots_by_day: @spots_by_day })
-          ]
-        end
-        format.html { redirect_to (is_from_chat ? trip_messages_path(@trip) : @trip), notice: "#{@spot.name} を追加しました" }
-      end
+      redirect_path = is_from_chat ? trip_messages_path(@trip) : trip_path(@trip)
+      redirect_to redirect_path, notice: "#{@spot.name} を追加しました", status: :see_other
     else
       flash.now[:alert] = "入力内容を確認してください。"
       render :new, status: :unprocessable_entity
@@ -52,21 +40,9 @@ class SpotsController < ApplicationController
     if @spot.update(spot_params)
       recalculate_all_travel_times_for_day(@spot.day_number) 
       
-      respond_to do |format|
-        format.html { redirect_to trip_path(@trip), notice: "#{@spot.name} を更新しました。" }
-        
-        format.turbo_stream do
-          @spots_by_day = @trip.spots.order(day_number: :asc, position: :asc).group_by(&:day_number)
-          
-          flash.now[:notice] = "#{@spot.name} を更新しました"
-
-          render turbo_stream: [
-            turbo_stream.update("flash", partial: "shared/flash_messages"),
-            turbo_stream.replace("trip_schedule_frame", partial: "trips/schedule", locals: { trip: @trip, spots_by_day: @spots_by_day })
-          ]
-        end
-      end
+      redirect_to trip_path(@trip), notice: "#{@spot.name} を更新しました", status: :see_other
     else
+      flash.now[:alert] = "入力内容を確認してください。"
       render :edit, status: :unprocessable_entity
     end
   end
@@ -121,7 +97,6 @@ class SpotsController < ApplicationController
   def duplicate
     @new_spot = @spot.dup
     
-    # ★修正: 複製時にpositionや移動時間をリセットして、安全に新規作成として扱う
     @new_spot.position = nil 
     @new_spot.travel_time = nil
 
