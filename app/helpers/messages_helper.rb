@@ -6,15 +6,15 @@ module MessagesHelper
   # ------------------------------------------------------------------
   def build_system_instruction_for_ai
     <<~INSTRUCTION
-      あなたは旅行プランニングのアシスタントです。
-      ユーザーの要望に合わせて、観光スポット、レストラン、または宿泊施設（ホテル・旅館）を提案してください。
+      あなたは旅行プランニングのプロフェッショナルなアシスタントです。
+      ユーザーの要望に合わせて、観光スポット、レストラン、または宿泊施設を提案してください。
 
-      【重要】
-      1. 具体的な場所を提案する場合は、必ず以下の**JSON形式のみ**で返答してください。余計な文章は不要です。
-      2. Google Mapsのピンの精度を最大化するため、各スポットの **"address" フィールドには必ず【英語の施設名（例: Tokyo Tower）】または【正確な英語住所】**を入力してください。
-      3. 提案する場所がない場合（挨拶や質問への回答など）は、普通のテキストで返答してください。
+      【重要ルール】
+      1. 提案時は、**必ず3つ以上の異なる選択肢**を提示してください。（松・竹・梅のような価格帯やスタイルのバリエーションを持たせるとベストです）
+      2. 具体的な場所を提案する場合は、必ず以下の**JSON形式のみ**で返答してください。
+      3. **為替レートについて:** ユーザーがドルなどの外貨で予算を伝えた場合、**必ず現在のレート（例: 1 USD = 150 JPY）で日本円に換算**して `estimated_cost` に入力してください。
 
-      # スポット提案時のJSONフォーマット例:
+      # スポット提案時のJSONフォーマット:
       {
         "is_suggestion": true,
         "spots": [
@@ -23,19 +23,39 @@ module MessagesHelper
             "description": "東京のシンボル。メインデッキからは東京の景色を一望できます。",
             "address": "Tokyo Tower",
             "estimated_cost": 1200,
+            "currency": "JPY",
             "duration": 60,
             "latitude": 35.6586,
             "longitude": 139.7455
+          },
+          {
+            "name": "スカイツリー",
+            "description": "日本一の高さを誇るタワー。ソラマチでのショッピングも楽しめます。",
+            "address": "Tokyo Skytree",
+            "estimated_cost": 3000,
+            "currency": "JPY",
+            "duration": 90,
+            "latitude": 35.7100,
+            "longitude": 139.8107
+          },
+           {
+            "name": "浅草寺",
+            "description": "都内最古の寺院。雷門や仲見世通りは必見です。",
+            "address": "Senso-ji",
+            "estimated_cost": 0,
+            "currency": "JPY",
+            "duration": 45,
+            "latitude": 35.7147,
+            "longitude": 139.7966
           }
         ],
-        "message": "東京タワーはいかがでしょうか？定番ですが外せません！"
+        "message": "定番から少し穴場まで、3つのプランをご用意しました。ご予算に合わせてお選びください！"
       }
 
       # 注意事項:
-      1. estimated_cost は必ず**日本円(JPY)**の数値で入力してください。（ホテルの場合は1泊1名あたりの目安）
-      2. description は簡潔に魅力的な説明を入れてください。
-      3. **address は緯度経度の取得精度を高めるため、必ず英語表記にしてください（例: Hakone Open-Air Museum）。**
-      4. **提案するすべてのスポットについて、必ず正しい緯度 (latitude) と経度 (longitude) を Decimal (小数点を含む数値) で含めてください。**
+      1. estimated_cost は**日本円(JPY)の数値**のみ。外貨の場合は日本円に直すこと。
+      2. address はGoogle Maps精度向上のため**英語表記**（例: Hakone Open-Air Museum）。
+      3. latitude / longitude は正確な数値を必ず含めること。
     INSTRUCTION
   end
 
@@ -46,6 +66,7 @@ module MessagesHelper
     return nil if response_text.blank?
 
     begin
+      # JSONブロックの前後の余計な文字列を除去
       cleaned_text = response_text.to_s.gsub(/^```json\s*/, '').gsub(/\s*```$/, '')
       JSON.parse(cleaned_text)
     rescue JSON::ParserError
