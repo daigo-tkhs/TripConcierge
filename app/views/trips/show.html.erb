@@ -88,7 +88,7 @@
           <p class="text-[10px] text-gray-500 font-bold mb-1">総予算 (予定)</p>
           <div class="flex items-end gap-1">
             <span class="text-lg font-bold text-blue-700">¥<%= number_with_delimiter(@total_estimated_cost) %></span>
-            <span class="text-[10px] text-gray-400 mb-1">/ ¥<%= number_with_delimiter(@trip.total_budget) %></span>
+            <span class="text-[11px] text-gray-500 mb-1">/ ¥<%= number_with_delimiter(@trip.total_budget) %></span>
           </div>
           <% if @total_estimated_cost > @trip.total_budget %>
             <p class="text-[10px] text-red-500 font-bold mt-1">⚠️ 予算オーバー</p>
@@ -97,21 +97,21 @@
         <div class="bg-green-50 rounded-lg p-3">
           <p class="text-[10px] text-gray-500 font-bold mb-1">総所要時間</p>
           <p class="text-lg font-bold text-green-700"><%= format_duration(@grand_total_mins) %></p>
-          <div class="flex gap-2 mt-1 text-[9px] text-gray-500">
+          <div class="flex gap-2 mt-1 text-[11px] text-gray-500">
             <span>滞在: <%= format_duration(@total_duration_mins) %></span>
             <span>移動: <%= format_duration(@total_travel_mins) %></span>
           </div>
         </div>
       </div>
       <div class="space-y-2">
-        <p class="text-xs font-bold text-gray-400">日別内訳</p>
+        <p class="text-xs font-bold text-gray-500">日別内訳</p>
         <% @daily_stats.each do |day, stats| %>
-          <div class="flex justify-between items-center text-xs border-b border-gray-50 pb-1 last:border-0">
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs border-b border-gray-50 pb-1 last:border-0">
             <div class="flex items-center gap-2">
               <span class="bg-gray-200 text-gray-600 px-1.5 rounded text-[10px] font-bold">DAY <%= day %></span>
               <span class="text-gray-600">¥<%= number_with_delimiter(stats[:cost]) %></span>
             </div>
-            <div class="text-gray-500">
+            <div class="text-gray-500 ml-auto">
               <span class="mr-2">滞在 <%= format_duration(stats[:stay]) %></span>
               <span>移動 <%= format_duration(stats[:travel]) %></span>
             </div>

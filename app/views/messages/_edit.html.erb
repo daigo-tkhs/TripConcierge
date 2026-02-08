@@ -18,7 +18,7 @@
                   class: "text-xs text-gray-500 hover:text-gray-700 transition font-medium",
                   data: { turbo_frame: dom_id(message) } %>
               
-              <%= f.button type: "submit", class: "bg-blue-600 text-white text-xs font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition shadow-sm flex items-center gap-1" do %>
+              <%= f.button type: "submit", class: "bg-blue-600 text-white text-xs font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition shadow-sm flex items-center gap-1", data: { turbo_submits_with: "更新中..." } do %>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5">
                   <path d="m2.695 14.762-1.262 3.155a.5.5 0 0 0 .65.65l3.155-1.262a4 4 0 0 0 1.343-.886L17.5 5.501a2.121 2.121 0 0 0-3-3L3.58 13.419a4 4 0 0 0-.885 1.343Z" />
                 </svg>

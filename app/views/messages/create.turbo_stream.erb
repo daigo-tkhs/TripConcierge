@@ -1,5 +1,8 @@
 <%# app/views/messages/create.turbo_stream.erb %>
 
+<%# 0. AI思考中インジケーターを削除 %>
+<%= turbo_stream.remove "ai-thinking-indicator" %>
+
 <%# 1. ユーザーのメッセージを追加 %>
 <%= turbo_stream.append "messages" do %>
   <%= render "messages/user_message", message: @message %>
@@ -20,6 +23,6 @@
 <%# 4. 一番下までスクロール %>
 <%= turbo_stream.append "messages" do %>
   <script>
-    document.getElementById("scroll-anchor").scrollIntoView({ behavior: "smooth" });
+    document.getElementById("scroll-anchor")?.scrollIntoView({ behavior: "smooth" });
   </script>
 <% end %>

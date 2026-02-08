@@ -8,10 +8,14 @@
   <%= turbo_stream.remove "message_#{id}" %>
 <% end %>
 
-<%# 3. 新しいAI返答があれば、リストの最後に追加 %>
+<%# 3. 新しいAI返答があれば、メッセージリストの最後に追加 %>
 <% if @ai_message.present? %>
-  <%= turbo_stream.append "messages-container", partial: "messages/ai_message", locals: { message: @ai_message } %>
+  <%= turbo_stream.append "messages", partial: "messages/ai_message", locals: { message: @ai_message } %>
 <% end %>
 
-<%# 4. スクロール調整 %>
-<%= turbo_stream.append "scroll-anchor", "<span data-scroll-to></span>" %>
+<%# 4. 一番下までスクロール %>
+<%= turbo_stream.append "messages" do %>
+  <script>
+    document.getElementById("scroll-anchor")?.scrollIntoView({ behavior: "smooth" });
+  </script>
+<% end %>

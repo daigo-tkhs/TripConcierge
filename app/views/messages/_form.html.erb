@@ -1,14 +1,15 @@
 <%# app/views/messages/_form.html.erb %>
-<%= form_with model: [trip, message], id: "new_message_form", class: "relative flex items-center w-full" do |f| %>
+<%= form_with model: [trip, message], id: "new_message_form", class: "relative flex items-center w-full", data: { controller: "chat-form", action: "turbo:submit-start->chat-form#submit" } do |f| %>
   <div class="flex-1 flex items-end gap-2 bg-gray-100 p-2 rounded-3xl border border-transparent focus-within:border-blue-500 focus-within:bg-white transition-colors w-full">
-    <%= f.text_area :prompt, 
-        placeholder: "メッセージを入力... (Ctrl + Enterで送信)", 
-        rows: 1, 
-        class: "flex-1 bg-transparent border-none focus:ring-0 resize-none max-h-32 py-2.5 px-3 text-sm w-full", 
+    <%= f.text_area :prompt,
+        placeholder: "メッセージを入力... (Ctrl + Enterで送信)",
+        rows: 1,
+        class: "flex-1 bg-transparent border-none focus:ring-0 resize-none max-h-32 py-2.5 px-3 text-sm w-full",
         oninput: 'this.style.height = "";this.style.height = this.scrollHeight + "px"',
-        onkeydown: "if((event.ctrlKey || event.metaKey) && event.key === 'Enter') { event.preventDefault(); this.form.requestSubmit(); }" 
+        onkeydown: "if((event.ctrlKey || event.metaKey) && event.key === 'Enter') { event.preventDefault(); this.form.requestSubmit(); }",
+        data: { 'chat-form-target': 'input' }
     %>
-    <%= f.button type: "submit", class: "bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition shadow-sm mb-0.5 mr-0.5 flex-shrink-0" do %>
+    <%= f.button type: "submit", class: "bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition shadow-sm mb-0.5 mr-0.5 flex-shrink-0 cursor-pointer", data: { 'chat-form-target': 'button' } do %>
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
         <path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" />
       </svg>

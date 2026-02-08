@@ -15,5 +15,8 @@ application.register("sortable", SortableController)
 import ScrollController from "controllers/scroll_controller"
 application.register("scroll", ScrollController)
 
+import ChatFormController from "controllers/chat_form_controller"
+application.register("chat-form", ChatFormController)
+
 import HelloController from "controllers/hello_controller"
 application.register("hello", HelloController)
